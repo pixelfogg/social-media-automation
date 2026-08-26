@@ -10,19 +10,14 @@ import {
 } from './services/db';
 import { Navbar } from './components/Navbar';
 import { ClientManager } from './components/ClientManager';
-import { BrandAnalyzer } from './components/BrandAnalyzer';
-import { MonthContentPlanner } from './components/MonthContentPlanner';
-import { ImagePromptStudio } from './components/ImagePromptStudio';
-import { PublisherQueue } from './components/PublisherQueue';
+import { ClientDashboard } from './components/ClientDashboard';
 import { SocialAccountConnectModal } from './components/SocialAccountConnectModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
   const [clients, setClients] = useState<Client[]>([]);
   const [activeClientId, setActiveId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'clients' | 'analyzer' | 'planner' | 'studio' | 'publisher'>('clients');
-  const [studioPost, setStudioPost] = useState<SocialPost | null>(null);
-  const [publisherPost, setPublisherPost] = useState<SocialPost | null>(null);
+  const [activeView, setActiveView] = useState<'clients_directory' | 'client_dashboard'>('client_dashboard');
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -45,6 +40,7 @@ export function App() {
     if (selected) {
       showToast(`Switched active workspace to "${selected.name}"`);
     }
+    setActiveView('client_dashboard');
   };
 
   const handleSaveClient = (client: Client) => {
@@ -53,6 +49,7 @@ export function App() {
     setActiveId(client.id);
     setActiveClientId(client.id);
     showToast(`Saved client profile & generated 30-day strategy for "${client.name}"`);
+    setActiveView('client_dashboard');
   };
 
   const handleDeleteClient = (id: string) => {
@@ -117,20 +114,21 @@ export function App() {
         />
       )}
 
-      {/* Sleek Minimal Header */}
+      {/* Sleek Global Header Bar */}
       <Navbar
         clients={clients}
         activeClient={activeClient}
         onSelectClient={handleSelectClient}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onOpenCreateClientModal={() => setActiveView('clients_directory')}
+        onViewAllClients={() => setActiveView('clients_directory')}
+        activeView={activeView}
       />
 
       {/* Main Workspace Canvas */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
-        {/* Step 1 & 2: Clients Portfolio & Social Accounts */}
-        {activeTab === 'clients' && (
+        {/* View 1: Clients Portfolio Directory */}
+        {activeView === 'clients_directory' && (
           <ClientManager
             clients={clients}
             activeClient={activeClient}
@@ -139,54 +137,19 @@ export function App() {
             onDeleteClient={handleDeleteClient}
             onOpenDashboard={(id) => {
               handleSelectClient(id);
-              setActiveTab('analyzer');
+              setActiveView('client_dashboard');
             }}
             onOpenConnectSocialModal={() => setShowConnectModal(true)}
           />
         )}
 
-        {/* Step 3: Client Dashboard & Brand Intelligence */}
-        {activeTab === 'analyzer' && (
-          <BrandAnalyzer
+        {/* View 2: Active Client Workspace Dashboard with Sub-Tabs */}
+        {activeView === 'client_dashboard' && (
+          <ClientDashboard
             client={activeClient}
             onUpdateClient={handleUpdateActiveClient}
+            onUpdatePost={handleUpdatePost}
             onOpenConnectSocialModal={() => setShowConnectModal(true)}
-          />
-        )}
-
-        {/* Step 4: 30-Day Social Media Content Planner */}
-        {activeTab === 'planner' && (
-          <MonthContentPlanner
-            client={activeClient}
-            onUpdateClient={handleUpdateActiveClient}
-            onOpenStudioForPost={(post) => {
-              setStudioPost(post);
-              setActiveTab('studio');
-            }}
-            onOpenPublisherForPost={(post) => {
-              setPublisherPost(post);
-              setActiveTab('publisher');
-            }}
-          />
-        )}
-
-        {/* Step 5: AI Visual & Prompt Generator */}
-        {activeTab === 'studio' && (
-          <ImagePromptStudio
-            client={activeClient}
-            selectedPost={studioPost}
-            onSelectPost={setStudioPost}
-            onUpdatePost={handleUpdatePost}
-          />
-        )}
-
-        {/* Step 6: Instant Publishing & Daily Push Scheduler */}
-        {activeTab === 'publisher' && (
-          <PublisherQueue
-            client={activeClient}
-            selectedPost={publisherPost}
-            onUpdateClient={handleUpdateActiveClient}
-            onUpdatePost={handleUpdatePost}
           />
         )}
 

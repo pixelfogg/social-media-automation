@@ -25,16 +25,18 @@ interface BrandAnalyzerProps {
   client: Client;
   onUpdateClient: (updatedClient: Client) => void;
   onOpenConnectSocialModal: () => void;
+  initialTab?: 'overview' | 'brand_guide_md';
 }
 
 export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({ 
   client, 
   onUpdateClient,
-  onOpenConnectSocialModal 
+  onOpenConnectSocialModal,
+  initialTab = 'overview'
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressMessage, setProgressMessage] = useState('');
-  const [activeViewTab, setActiveViewTab] = useState<'overview' | 'brand_guide_md'>('overview');
+  const [activeViewTab, setActiveViewTab] = useState<'overview' | 'brand_guide_md'>(initialTab);
   const [copiedMd, setCopiedMd] = useState(false);
 
   const analysis: BrandAnalysis = client.brandAnalysis || analyzeBrandAndWebsite(client);
