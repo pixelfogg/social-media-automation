@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --canvas-dark: #0a0a0a;
+    --surface-dark: #141416;
+    --surface-card: #1c1c1e;
+    --hairline-dark: #26262a;
+    --brand-mint: #00d4a4;
+    --brand-mint-hover: #00b48a;
+    --text-primary: #ffffff;
+    --text-secondary: #a8a8aa;
+    --text-muted: #71717a;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #0a0a0a;
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+}
+
+/* Mintlify Pill Buttons */
+.btn-mint {
+  background-color: #00d4a4;
+  color: #0a0a0a;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.btn-mint:hover {
+  background-color: #00b48a;
+  transform: translateY(-1px);
+}
+
+.btn-pill-dark {
+  background-color: #1c1c1e;
+  color: #ffffff;
+  border: 1px solid #26262a;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.btn-pill-dark:hover {
+  background-color: #26262a;
+  border-color: #3f3f46;
+}
+
+/* Mintlify Card styling */
+.mint-card {
+  background-color: #141416;
+  border: 1px solid #26262a;
+  border-radius: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mint-card:hover {
+  border-color: #3f3f46;
+}
+
+.mint-card-active {
+  background-color: #141416;
+  border: 1px solid #00d4a4;
+  box-shadow: 0 0 20px rgba(0, 212, 164, 0.12);
+  border-radius: 16px;
+}
+
+/* Code block typography */
+.font-mono-code {
+  font-family: 'JetBrains Mono', 'Geist Mono', monospace;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #26262a;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
