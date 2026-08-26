@@ -44,6 +44,7 @@ export interface BrandAnalysis {
   recommendedHashtagClusters: string[];
   targetAudiencePersona: string;
   brandHealthScore: number;
+  designMd: string; // Dynamic generated Markdown Brand Guide following design specification
 }
 
 export interface SocialPost {

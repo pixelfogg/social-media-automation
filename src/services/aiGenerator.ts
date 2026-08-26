@@ -18,8 +18,71 @@ const PLATFORM_PRESETS: SocialPlatform[][] = [
   ['twitter', 'linkedin']
 ];
 
+export function generateBrandGuideDesignMd(client: Client): string {
+  const primaryColor = client.brandColors[0] || '#00d4a4';
+  const secondaryColor = client.brandColors[1] || '#3772cf';
+  const darkInk = client.brandColors[2] || '#0a0a0a';
+  const cleanDomain = client.websiteUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+  return `## Brand Guide — ${client.name} (` + cleanDomain + `)
+
+## Overview
+
+${client.name} operates in the **${client.industry}** domain. The visual identity reads as modern, authoritative, and developer-grade. The brand pairs a deep dark canvas \`{colors.canvas}\` (\`${darkInk}\`) with a high-contrast ink text and a saturated primary accent \`{colors.primary}\` (\`${primaryColor}\`) for conversion targets.
+
+The tone is **${client.tone}**. Typography relies on \`Inter\` for body and UI elements, paired with clean geometric headings. Components feature \`rounded-md\` (12px) borders and crisp hairline strokes (\`#26262a\`).
+
+**Key Characteristics:**
+- **Primary Conversion Accent**: \`{colors.primary}\` (\`${primaryColor}\`) — used selectively for CTAs, badges, and active state indicators.
+- **Secondary Accent**: \`{colors.secondary}\` (\`${secondaryColor}\`) — used for supporting data highlights and gradient overlays.
+- **Deep Surface Canvas**: \`{colors.canvas}\` (\`${darkInk}\`) — clean ultra-dark mode background.
+- **Card Radius**: \`{rounded.md}\` (12px) for buttons and cards.
+- **Typography Pairing**: Inter + JetBrains / Geist Mono for technical code & metadata.
+
+## Colors
+
+### Brand & Accent
+- **Primary Accent** (\`{colors.primary}\` — \`${primaryColor}\`): Conversion signature. Primary CTA buttons, key metrics, active states.
+- **Secondary Accent** (\`{colors.secondary}\` — \`${secondaryColor}\`): Supporting highlight for charts, badges, and gradient fills.
+
+### Surface & Neutral
+- **Canvas Dark** (\`{colors.canvas}\` — \`${darkInk}\`): Deep background canvas.
+- **Card Surface** (\`{colors.surface}\` — \`#141416\`): Elevated card container fill.
+- **Hairline Border** (\`{colors.border}\` — \`#26262a\`): Subtle stroke separation.
+
+## Typography Hierarchy
+
+| Token | Size | Weight | Line Height | Use Case |
+|---|---|---|---|---|
+| \`{typography.display-xl}\` | 56px | 800 | 1.15 | Hero headlines & campaign banners |
+| \`{typography.display-lg}\` | 36px | 700 | 1.25 | Section headings & 30-day post titles |
+| \`{typography.body-md}\` | 16px | 400 | 1.50 | Social captions & body paragraphs |
+| \`{typography.mono-code}\` | 13px | 600 | 1.40 | Code blocks, hashtags, CTA links, metadata |
+
+## Image & Visual Prompting Rules for AI Generation
+
+When synthesizing 3D renders, social media visual posts, or promotional graphics for **${client.name}**, follow these exact visual rules:
+1. **Primary Color Focus**: Incorporate glowing highlights in \`${primaryColor}\`.
+2. **Background Environment**: Deep dark studio ambient lighting in \`${darkInk}\` with soft '#141416' card surfaces.
+3. **Graphic Style**: Modern glassmorphism, 3D isometric objects, or sleek UI dashboard cards.
+4. **Composition**: Clean centered framing with 12px rounded container cards, high contrast, and crisp vector overlays.
+
+## Do's and Don'ts
+
+### Do
+- Reserve \`${primaryColor}\` for key action triggers and CTA badges.
+- Keep card corners strictly at 12px (\`rounded-md\`).
+- Pair dark surfaces with crisp \`#26262a\` hairline borders.
+
+### Don't
+- Don't use uncurated rainbow gradients.
+- Don't use light grey borders. Keep contrast sharp and professional.
+`;
+}
+
 export function analyzeBrandAndWebsite(client: Client): BrandAnalysis {
   const cleanDomain = client.websiteUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  const designMd = generateBrandGuideDesignMd(client);
   
   const crawledPages = [
     {
@@ -67,11 +130,12 @@ export function analyzeBrandAndWebsite(client: Client): BrandAnalysis {
     analyzedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
     crawledPages,
     extractedTone: client.tone,
-    visualMood: `Mintlify dark mode UI aesthetic, featuring primary accent ${client.brandColors[0] || '#00d4a4'} with crisp typography and clean card layout.`,
+    visualMood: `Brand Guide Palette: Primary Accent ${client.brandColors[0] || '#00d4a4'} on Dark Canvas ${client.brandColors[2] || '#0a0a0a'} with 12px rounded cards and Inter/Mono typography.`,
     contentPillars,
     recommendedHashtagClusters,
     targetAudiencePersona: client.targetAudience || `Decision makers, enthusiasts, and active consumers in the ${client.industry} sector seeking top-tier solutions.`,
-    brandHealthScore: 96
+    brandHealthScore: 98,
+    designMd
   };
 }
 
@@ -82,6 +146,9 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
   const domain = client.websiteUrl.endsWith('/') ? client.websiteUrl.slice(0, -1) : client.websiteUrl;
   const brandName = client.name;
   const industry = client.industry;
+  const primaryColor = client.brandColors[0] || '#00d4a4';
+  const secondaryColor = client.brandColors[1] || '#3772cf';
+  const darkCanvas = client.brandColors[2] || '#0a0a0a';
 
   for (let i = 1; i <= 30; i++) {
     const postDate = new Date(startDate);
@@ -109,7 +176,7 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Read the complete breakdown on our blog at ${domain}/blog/strategies`;
         targetUrl = `${domain}/blog/strategies`;
         hashtags = [`#${industry.replace(/\s+/g, '')}Tips`, `#ProTips`, `#GrowthHacks`, `#${brandName.replace(/\s+/g, '')}`];
-        imagePrompt = `Ultra-modern tech graphic, minimalist 3D isometric representation of 5 step strategy, glowing mint green accents in ${client.brandColors[0] || '#00d4a4'}, 8k resolution, clean dark background.`;
+        imagePrompt = `Minimalist 3D isometric graphic tailored to ${brandName} Brand Guide. Features glowing primary accent ${primaryColor} and ${secondaryColor} elements on deep dark canvas ${darkCanvas}, 12px rounded cards, studio lighting, 8k resolution.`;
         break;
 
       case 'Product Spotlight':
@@ -119,7 +186,7 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Claim your free demo at ${domain}/demo`;
         targetUrl = `${domain}/demo`;
         hashtags = [`#ProductSpotlight`, `#${brandName.replace(/\s+/g, '')}`, `#WorkflowAutomation`, `#Innovation`];
-        imagePrompt = `Sleek dark mode UI mockup dashboard hovering in workspace, glowing mint green graphs, soft studio lighting, color palette featuring ${client.brandColors[0] || '#00d4a4'}.`;
+        imagePrompt = `Sleek dark mode UI dashboard mockup following ${brandName} Brand Guide. Glowing graphs in ${primaryColor}, dark surface ${darkCanvas}, clean Inter typography overlays, high-end studio lighting.`;
         break;
 
       case 'Behind The Scenes':
@@ -129,7 +196,7 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Join our team or learn more at ${domain}/about`;
         targetUrl = `${domain}/about`;
         hashtags = [`#BehindTheScenes`, `#Culture`, `#TeamWork`, `#${brandName.replace(/\s+/g, '')}Life`];
-        imagePrompt = `Warm photograph of a modern tech office workspace with team members collaborating around glass whiteboard, depth of field, 35mm photographic style.`;
+        imagePrompt = `Authentic 35mm photograph of modern engineering workspace matching ${brandName} brand tone (${client.tone}). Warm ambient lighting, team collaboration around glass whiteboard, rich cinematic depth.`;
         break;
 
       case 'Thought Leadership':
@@ -139,7 +206,7 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Download our full Trend Report at ${domain}/reports/2026-trends`;
         targetUrl = `${domain}/reports/2026-trends`;
         hashtags = [`#ThoughtLeadership`, `#FutureOfWork`, `#${industry.replace(/\s+/g, '')}Trends`, `#Leadership`];
-        imagePrompt = `Futuristic technological vision artwork, glowing digital network nodes connecting global nodes, cinematic lighting, sleek dark metallic textures, ultra-detailed render.`;
+        imagePrompt = `Futuristic technological network graphic aligned with ${brandName} Brand Guide. Glowing nodes in ${primaryColor}, dark metallic background ${darkCanvas}, ultra-detailed render.`;
         break;
 
       case 'Social Proof & Case Study':
@@ -149,7 +216,7 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Read the full case study at ${domain}/case-studies/client-x`;
         targetUrl = `${domain}/case-studies/client-x`;
         hashtags = [`#CaseStudy`, `#CustomerSuccess`, `#ROI`, `#ProvenResults`];
-        imagePrompt = `Modern financial metrics dashboard chart showing dramatic upwards curve line in glowing mint green, clean dark UI presentation, high resolution detail.`;
+        imagePrompt = `High-impact financial chart graphic following ${brandName} Brand Guide. Upward trend line glowing in ${primaryColor}, dark card surface ${darkCanvas}, crisp text overlays.`;
         break;
 
       case 'Promotional & Offer':
@@ -159,12 +226,9 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         cta = `Claim your exclusive offer at ${domain}/pricing`;
         targetUrl = `${domain}/pricing`;
         hashtags = [`#SpecialOffer`, `#${brandName.replace(/\s+/g, '')}`, `#Exclusive`, `#UpgradeToday`];
-        imagePrompt = `Luxury sleek promotional banner design, floating 3D geometric badges, dark rich background, high energy studio render.`;
+        imagePrompt = `Sleek promotional render obeying ${brandName} Brand Guide. Saturated ${primaryColor} CTA badge, 12px rounded cards, dark studio backdrop, 8k resolution.`;
         break;
     }
-
-    const primaryColor = client.brandColors[0] || '#00d4a4';
-    const secondaryColor = client.brandColors[1] || '#1c1c1e';
 
     posts.push({
       id: `post_${client.id}_day_${i}`,
@@ -223,7 +287,7 @@ export function generateSVGDataUrl(title: string, category: string, primaryColor
     <rect x="75" y="100" width="650" height="600" rx="16" fill="#141416" stroke="#26262a" stroke-width="2" />
     
     <!-- Category Badge -->
-    <rect x="120" y="150" width="220" height="40" rx="20" fill="#00d4a4" />
+    <rect x="120" y="150" width="220" height="40" rx="20" fill="${primaryColor}" />
     <text x="230" y="175" font-family="-apple-system, sans-serif" font-size="14" font-weight="700" fill="#0a0a0a" text-anchor="middle" letter-spacing="1">
       DAY ${day} • ${sanitizedCat.toUpperCase()}
     </text>
@@ -237,10 +301,10 @@ export function generateSVGDataUrl(title: string, category: string, primaryColor
     
     <!-- Footer CTA bar -->
     <line x1="120" y1="580" x2="680" y2="580" stroke="#26262a" stroke-width="2" />
-    <text x="120" y="625" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#00d4a4">
-      SocialPulse AI • Mintlify UI Engine
+    <text x="120" y="625" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="${primaryColor}">
+      SocialPulse AI • Brand Guide Engine
     </text>
-    <circle cx="650" cy="620" r="16" fill="#00d4a4" />
+    <circle cx="650" cy="620" r="16" fill="${primaryColor}" />
   </svg>`;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
