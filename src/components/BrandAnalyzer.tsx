@@ -19,7 +19,7 @@ import {
   Copy
 } from 'lucide-react';
 import { analyzeBrandAndWebsite } from '../services/aiGenerator';
-import { analyzeWebsiteWithGemini, generate30DayCalendarWithGemini } from '../services/geminiService';
+import { analyzeWebsiteWithGemini } from '../services/geminiService';
 
 interface BrandAnalyzerProps {
   client: Client;
@@ -44,19 +44,15 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
 
   const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
-    setProgressMessage(`Connecting Gemini AI & live network socket to ${client.websiteUrl}...`);
+    setProgressMessage(`Connecting Gemini AI & live crawler to ${client.websiteUrl}...`);
 
     try {
-      setProgressMessage(`Gemini AI analyzing brand voice, visual tokens, and subpages for ${client.name}...`);
+      setProgressMessage(`Gemini AI analyzing live website copy, subpages, brand voice, and DESIGN.md for ${client.name}...`);
       const updatedAnalysis = await analyzeWebsiteWithGemini(client);
-      
-      setProgressMessage(`Synthesizing 30-Day Gemini AI content strategy...`);
-      const updatedPosts = await generate30DayCalendarWithGemini(client);
 
       onUpdateClient({
         ...client,
-        brandAnalysis: updatedAnalysis,
-        posts: updatedPosts
+        brandAnalysis: updatedAnalysis
       });
     } catch (err) {
       console.warn('Analysis fallback:', err);

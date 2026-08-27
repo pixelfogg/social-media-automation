@@ -77,23 +77,33 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
           </p>
         </div>
 
-        {/* Post Select Dropdown */}
-        <div className="flex items-center space-x-2 bg-[#0a0a0a] border border-[#26262a] rounded-xl px-3 py-2 text-xs">
-          <span className="text-neutral-400 font-semibold">Post:</span>
-          <select
-            value={activePost.id}
-            onChange={(e) => {
-              const p = posts.find(item => item.id === e.target.value);
-              if (p) onSelectPost(p);
-            }}
-            className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-2"
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Post Select Dropdown */}
+          <div className="flex items-center space-x-2 bg-[#0a0a0a] border border-[#26262a] rounded-xl px-3 py-2 text-xs">
+            <span className="text-neutral-400 font-semibold">Post:</span>
+            <select
+              value={activePost.id}
+              onChange={(e) => {
+                const p = posts.find(item => item.id === e.target.value);
+                if (p) onSelectPost(p);
+              }}
+              className="bg-transparent text-white font-bold focus:outline-none cursor-pointer pr-2"
+            >
+              {posts.map((p) => (
+                <option key={p.id} value={p.id} className="bg-[#141416] text-white">
+                  Day {p.dayNumber}: {p.title.slice(0, 30)}...
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleUpdateActivePrompt}
+            className="btn-mint flex items-center space-x-2 px-4 py-2 text-xs font-bold shadow-lg shadow-[#00d4a4]/20"
           >
-            {posts.map((p) => (
-              <option key={p.id} value={p.id} className="bg-[#141416] text-white">
-                Day {p.dayNumber}: {p.title.slice(0, 30)}...
-              </option>
-            ))}
-          </select>
+            <Sparkles className="w-3.5 h-3.5 text-[#0a0a0a]" />
+            <span>Generate & Save Prompt</span>
+          </button>
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { generate30DayCalendar } from '../services/aiGenerator';
+import { generate30DayCalendarWithGemini } from '../services/geminiService';
 
 interface MonthContentPlannerProps {
   client: Client;
@@ -46,11 +47,21 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
   const posts = client.posts || [];
 
-  const handleRegenerateMonth = (e?: React.FormEvent) => {
+  const handleRegenerateMonth = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsRegenerating(true);
 
-    setTimeout(() => {
+    try {
+      const customClient = {
+        ...client,
+        tone: genSettings.toneOverride || client.tone
+      };
+      const freshPosts = await generate30DayCalendarWithGemini(customClient);
+      onUpdateClient({
+        ...client,
+        posts: freshPosts
+      });
+    } catch {
       const customClient = {
         ...client,
         tone: genSettings.toneOverride || client.tone
@@ -60,9 +71,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         ...client,
         posts: freshPosts
       });
+    } finally {
       setIsRegenerating(false);
       setShowGenModal(false);
-    }, 1200);
+    }
   };
 
   const handleApproveAllDrafts = () => {
@@ -181,11 +193,20 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
           </button>
 
           <button
-            onClick={() => setShowGenModal(true)}
-            className="btn-mint flex items-center space-x-2 px-4 py-2 text-xs font-bold shadow-sm"
+            onClick={() => handleRegenerateMonth()}
+            disabled={isRegenerating}
+            className="btn-mint flex items-center space-x-2 px-4 py-2 text-xs font-bold shadow-lg shadow-[#00d4a4]/20 disabled:opacity-50"
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Custom 30-Day Generator</span>
+            <Sparkles className={`w-3.5 h-3.5 text-[#0a0a0a] ${isRegenerating ? 'animate-spin' : ''}`} />
+            <span>{isRegenerating ? 'Gemini AI Generating 30 Posts...' : 'Generate 30-Day Posts (Gemini AI)'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowGenModal(true)}
+            className="btn-pill-dark flex items-center space-x-2 px-3 py-2 text-xs font-semibold"
+          >
+            <Sliders className="w-3.5 h-3.5 text-[#00d4a4]" />
+            <span>Custom Settings</span>
           </button>
         </div>
       </div>

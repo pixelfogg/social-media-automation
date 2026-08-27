@@ -15,11 +15,7 @@ const INITIAL_CLIENTS: Client[] = [
     tone: 'Professional & Authoritative',
     targetAudience: 'CTOs, VPs of Engineering, IT Directors at Mid-to-Enterprise companies',
     brandColors: ['#6366F1', '#4F46E5', '#06B6D4'],
-    socialAccounts: [
-      { id: 'sa_1', platform: 'linkedin', handle: 'nexus-tech-solutions', connected: true, followerCount: 42800 },
-      { id: 'sa_2', platform: 'twitter', handle: '@NexusTechAI', connected: true, followerCount: 18500 },
-      { id: 'sa_3', platform: 'facebook', handle: 'NexusTechOfficial', connected: true, followerCount: 12400 }
-    ],
+    socialAccounts: [],
     posts: [],
     createdAt: '2026-08-01',
     dailyScheduleEnabled: true,
@@ -35,11 +31,7 @@ const INITIAL_CLIENTS: Client[] = [
     tone: 'Bold, Energetic & Direct',
     targetAudience: 'E-commerce Founders, Marketing VPs, DTC Brand Directors',
     brandColors: ['#EF4444', '#F59E0B', '#10B981'],
-    socialAccounts: [
-      { id: 'sa_4', platform: 'instagram', handle: '@apexgrowth agency', connected: true, followerCount: 89300 },
-      { id: 'sa_5', platform: 'linkedin', handle: 'apex-growth-agency', connected: true, followerCount: 31200 },
-      { id: 'sa_6', platform: 'tiktok', handle: '@apexgrowth', connected: true, followerCount: 145000 }
-    ],
+    socialAccounts: [],
     posts: [],
     createdAt: '2026-08-05',
     dailyScheduleEnabled: true,
@@ -55,11 +47,7 @@ const INITIAL_CLIENTS: Client[] = [
     tone: 'Empathetic & Warm',
     targetAudience: 'Athletes, fitness professionals, and wellness conscious individuals aged 22-45',
     brandColors: ['#10B981', '#059669', '#3B82F6'],
-    socialAccounts: [
-      { id: 'sa_7', platform: 'instagram', handle: '@vanguardpeakfit', connected: true, followerCount: 64200 },
-      { id: 'sa_8', platform: 'facebook', handle: 'VanguardPeakFitness', connected: true, followerCount: 22100 },
-      { id: 'sa_9', platform: 'pinterest', handle: 'vanguardfitness', connected: true, followerCount: 15400 }
-    ],
+    socialAccounts: [],
     posts: [],
     createdAt: '2026-08-10',
     dailyScheduleEnabled: false,
@@ -75,11 +63,7 @@ const INITIAL_CLIENTS: Client[] = [
     tone: 'Luxury & Minimalist',
     targetAudience: 'Eco-conscious skincare consumers, spa enthusiasts, luxury lifestyle shoppers',
     brandColors: ['#F43F5E', '#EC4899', '#8B5CF6'],
-    socialAccounts: [
-      { id: 'sa_10', platform: 'instagram', handle: '@luminaskincare', connected: true, followerCount: 112000 },
-      { id: 'sa_11', platform: 'pinterest', handle: 'luminaorganic', connected: true, followerCount: 54300 },
-      { id: 'sa_12', platform: 'tiktok', handle: '@luminabeauty', connected: true, followerCount: 87100 }
-    ],
+    socialAccounts: [],
     posts: [],
     createdAt: '2026-08-15',
     dailyScheduleEnabled: true,
