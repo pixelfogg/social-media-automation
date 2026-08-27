@@ -4,6 +4,7 @@
 
 import type { Client, BrandAnalysis, SocialPost, PostCategory, SocialPlatform } from '../types';
 import { fetchLiveWebsiteMetadata } from './webCrawlerService';
+import { generateSVGDataUrl } from './aiGenerator';
 
 export function getGeminiApiKey(): string {
   return import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -158,6 +159,7 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
 export async function generate30DayCalendarWithGemini(client: Client): Promise<SocialPost[]> {
   const cleanDomain = client.websiteUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const primaryColor = client.brandColors[0] || '#00d4a4';
+  const secondaryColor = client.brandColors[1] || '#3772cf';
 
   const categories: PostCategory[] = [
     'Educational & Tips',
@@ -259,7 +261,7 @@ Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
       imagePrompt,
       imageSource: 'ai_generated' as const,
       status: index === 0 ? 'scheduled' : (index < 3 ? 'scheduled' : 'draft'),
-      imageUrl: `https://images.unsplash.com/photo-${1618005182384 + (index * 23)}?w=600&auto=format&fit=crop&q=80`
+      imageUrl: generateSVGDataUrl(title, category, primaryColor, secondaryColor, day)
     };
   });
 }
@@ -358,17 +360,8 @@ Return ONLY the final Midjourney/Flux/Gemini image prompt text, no quotes or exp
     refinedPrompt = `${basePrompt}, dark mode aesthetic, ${primaryColor} glowing accent lighting, 8k resolution, octane render`;
   }
 
-  // Generate an authentic high-resolution abstract visual based on prompt hash & topic keyword
-  const keyword = encodeURIComponent(
-    post.category.toLowerCase().includes('product') ? 'technology,device,modern' :
-    post.category.toLowerCase().includes('thought') ? 'strategy,abstract,neon' :
-    post.category.toLowerCase().includes('case') ? 'growth,chart,analytics' :
-    post.category.toLowerCase().includes('offer') ? 'launch,premium,abstract' :
-    'minimal,abstract,dark'
-  );
-
   const seed = Math.abs(post.title.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + Date.now()) % 1000;
-  const generatedImageUrl = `https://images.unsplash.com/photo-${1618005182384 + (seed % 40)}?w=1200&auto=format&fit=crop&q=90&sig=${seed}&topic=${keyword}`;
+  const generatedImageUrl = generateSVGDataUrl(post.title, post.category, primaryColor, secondaryColor, post.dayNumber || (seed % 30) + 1);
 
   return {
     imageUrl: generatedImageUrl,
