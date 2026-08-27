@@ -5,7 +5,8 @@ import {
   Boxes, 
   ChevronDown, 
   Users, 
-  Plus
+  Plus,
+  Database
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,6 +14,7 @@ interface NavbarProps {
   activeClient: Client;
   onSelectClient: (clientId: string) => void;
   onOpenCreateClientModal: () => void;
+  onOpenDatabaseBackupModal: () => void;
   onViewAllClients: () => void;
   activeView: 'clients_directory' | 'client_dashboard';
 }
@@ -22,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeClient,
   onSelectClient,
   onOpenCreateClientModal,
+  onOpenDatabaseBackupModal,
   onViewAllClients,
   activeView
 }) => {
@@ -64,6 +67,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Global Actions */}
             <button
+              onClick={onOpenDatabaseBackupModal}
+              className="p-1.5 rounded-full bg-[#141416] text-neutral-300 hover:text-white border border-[#26262a] transition-colors"
+              title="Database Backup & Restore"
+            >
+              <Database className="w-3.5 h-3.5 text-[#00d4a4]" />
+            </button>
+
+            <button
               onClick={onViewAllClients}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center space-x-1.5 ${
                 activeView === 'clients_directory'
@@ -72,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Clients Directory</span>
+              <span>Directory</span>
             </button>
 
             <button

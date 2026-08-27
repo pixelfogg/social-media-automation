@@ -12,6 +12,7 @@ import { Navbar } from './components/Navbar';
 import { ClientManager } from './components/ClientManager';
 import { ClientDashboard } from './components/ClientDashboard';
 import { SocialAccountConnectModal } from './components/SocialAccountConnectModal';
+import { DatabaseBackupModal } from './components/DatabaseBackupModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
@@ -19,13 +20,18 @@ export function App() {
   const [activeClientId, setActiveId] = useState<string>('');
   const [activeView, setActiveView] = useState<'clients_directory' | 'client_dashboard'>('client_dashboard');
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refreshWorkspaceData = () => {
     const loadedClients = getClients();
     setClients(loadedClients);
     const initialActiveId = getActiveClientId();
     setActiveId(initialActiveId);
+  };
+
+  useEffect(() => {
+    refreshWorkspaceData();
   }, []);
 
   const showToast = (msg: string) => {
@@ -114,12 +120,21 @@ export function App() {
         />
       )}
 
+      {/* Database Backup & Restore Modal */}
+      {showBackupModal && (
+        <DatabaseBackupModal
+          onClose={() => setShowBackupModal(false)}
+          onRefreshWorkspace={refreshWorkspaceData}
+        />
+      )}
+
       {/* Sleek Global Header Bar */}
       <Navbar
         clients={clients}
         activeClient={activeClient}
         onSelectClient={handleSelectClient}
         onOpenCreateClientModal={() => setActiveView('clients_directory')}
+        onOpenDatabaseBackupModal={() => setShowBackupModal(true)}
         onViewAllClients={() => setActiveView('clients_directory')}
         activeView={activeView}
       />

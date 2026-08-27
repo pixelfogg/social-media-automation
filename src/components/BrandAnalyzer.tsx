@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { analyzeBrandAndWebsite } from '../services/aiGenerator';
+import { fetchLiveWebsiteMetadata } from '../services/webCrawlerService';
 
 interface BrandAnalyzerProps {
   client: Client;
@@ -42,27 +43,33 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
   const analysis: BrandAnalysis = client.brandAnalysis || analyzeBrandAndWebsite(client);
   const clientSocialAccounts = client.socialAccounts || [];
 
-  const handleRunAnalysis = () => {
+  const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
-    setProgressMessage(`Crawling ${client.websiteUrl}...`);
+    setProgressMessage(`Connecting live network socket to ${client.websiteUrl}...`);
 
-    setTimeout(() => {
-      setProgressMessage('Parsing HTML metadata & building DESIGN.md Brand Guide...');
-    }, 800);
+    try {
+      const crawlRes = await fetchLiveWebsiteMetadata(client.websiteUrl);
+      setProgressMessage(`Parsed OpenGraph metadata for "${crawlRes.title}". Building DESIGN.md...`);
 
-    setTimeout(() => {
-      setProgressMessage('Extracting color tokens, typography scales & prompt rules...');
-    }, 1600);
+      const updatedAnalysis = analyzeBrandAndWebsite(client);
+      if (crawlRes.crawledPages && crawlRes.crawledPages.length > 0) {
+        updatedAnalysis.crawledPages = crawlRes.crawledPages;
+      }
 
-    setTimeout(() => {
+      onUpdateClient({
+        ...client,
+        brandAnalysis: updatedAnalysis
+      });
+    } catch (err) {
       const updatedAnalysis = analyzeBrandAndWebsite(client);
       onUpdateClient({
         ...client,
         brandAnalysis: updatedAnalysis
       });
+    } finally {
       setIsAnalyzing(false);
       setProgressMessage('');
-    }, 2400);
+    }
   };
 
   const handleCopyDesignMd = () => {

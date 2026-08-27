@@ -161,3 +161,13 @@ export function updatePostInClient(clientId: string, updatedPost: SocialPost): C
   }
   return clients;
 }
+
+export function resetToDefaultSeed(): Client[] {
+  const initial = INITIAL_CLIENTS.map(c => ({
+    ...c,
+    brandAnalysis: analyzeBrandAndWebsite(c),
+    posts: generate30DayCalendar(c)
+  }));
+  saveClients(initial);
+  return initial;
+}
