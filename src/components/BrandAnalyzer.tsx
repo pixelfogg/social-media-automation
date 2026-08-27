@@ -52,8 +52,13 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
       setProgressMessage(`Gemini AI analyzing live website copy, subpages, brand voice, and DESIGN.md for ${client.name}...`);
       const updatedAnalysis = await analyzeWebsiteWithGemini(client);
 
+      const liveColors = (updatedAnalysis.extractedColors && updatedAnalysis.extractedColors.length > 0)
+        ? updatedAnalysis.extractedColors
+        : client.brandColors;
+
       onUpdateClient({
         ...client,
+        brandColors: liveColors,
         brandAnalysis: updatedAnalysis
       });
     } catch (err) {

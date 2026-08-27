@@ -149,6 +149,8 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       recommendedHashtagClusters: parsed.recommendedHashtagClusters || [`#${cleanDomain.replace(/\..*$/, '')}`, `#${client.name.replace(/\s+/g, '')}`, `#${client.industry.replace(/\s+/g, '')}`],
       targetAudiencePersona: parsed.targetAudiencePersona || client.targetAudience,
       brandHealthScore: parsed.brandHealthScore || 98,
+      extractedColors,
+      extractedFonts,
       designMd: parsed.designMd || generateFallbackDesignMd(client, cleanDomain, extractedColors, extractedFonts)
     };
   } catch (err) {
@@ -169,6 +171,8 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       ],
       targetAudiencePersona: client.targetAudience || 'Enterprises, founders, and ambitious brands looking for high-impact software and AI workflows',
       brandHealthScore: 96,
+      extractedColors,
+      extractedFonts,
       designMd: generateFallbackDesignMd(client, cleanDomain, extractedColors, extractedFonts)
     };
   }
