@@ -360,8 +360,21 @@ Return ONLY the final Midjourney/Flux/Gemini image prompt text, no quotes or exp
     refinedPrompt = `${basePrompt}, dark mode aesthetic, ${primaryColor} glowing accent lighting, 8k resolution, octane render`;
   }
 
-  const seed = Math.abs(post.title.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + Date.now()) % 1000;
-  const generatedImageUrl = generateSVGDataUrl(post.title, post.category, primaryColor, secondaryColor, post.dayNumber || (seed % 30) + 1);
+  const seed = Math.abs(post.title.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + Date.now()) % 10;
+  const verifiedList = [
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1634655610415-4fa2c64db340?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1618004912476-29818d81ae2e?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1633167606207-d840b5070fc2?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=1200&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=1200&auto=format&fit=crop&q=80'
+  ];
+
+  const generatedImageUrl = verifiedList[seed % verifiedList.length];
 
   return {
     imageUrl: generatedImageUrl,
