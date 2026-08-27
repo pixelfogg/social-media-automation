@@ -9,6 +9,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
+import { PostGraphicCard } from './PostGraphicCard';
 import { generateVisualImageWithGemini } from '../services/geminiService';
 
 interface ImagePromptStudioProps {
@@ -326,7 +327,11 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
 
               {/* Visual Card Image */}
               <div className="aspect-square bg-[#141416] overflow-hidden relative">
-                <img src={activePost.imageUrl} alt={activePost.title} className="w-full h-full object-cover" />
+                <PostGraphicCard
+                  post={activePost}
+                  primaryColor={primaryColor}
+                  secondaryColor={client.brandColors[1] || '#3772cf'}
+                />
               </div>
 
               {/* Copywriting Preview */}

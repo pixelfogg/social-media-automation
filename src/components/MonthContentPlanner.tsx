@@ -16,6 +16,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
+import { PostGraphicCard } from './PostGraphicCard';
 import { generate30DayCalendar } from '../services/aiGenerator';
 import { generate30DayCalendarWithGemini, generateVisualImageWithGemini } from '../services/geminiService';
 
@@ -327,11 +328,11 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <div>
               {/* Image Preview */}
               <div className="relative aspect-video bg-[#0a0a0a] overflow-hidden border-b border-[#26262a]">
-                <img
-                  key={post.imageUrl}
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                <PostGraphicCard
+                  post={post}
+                  primaryColor={client.brandColors[0] || '#00d4a4'}
+                  secondaryColor={client.brandColors[1] || '#3772cf'}
+                  className="group-hover:scale-102 transition-transform duration-300"
                 />
                 
                 {/* Generation Loading Overlay */}
