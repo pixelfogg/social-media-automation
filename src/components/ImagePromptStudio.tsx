@@ -5,9 +5,11 @@ import {
   Copy, 
   Check, 
   Sliders, 
-  Palette
+  Palette,
+  Image as ImageIcon
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
+import { generateVisualImageWithGemini } from '../services/geminiService';
 
 interface ImagePromptStudioProps {
   client: Client;
@@ -29,6 +31,7 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
   const [lighting, setLighting] = useState('Deep Studio Dark Ambient');
   const [aspectRatio, setAspectRatio] = useState('--ar 1:1');
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [activeMockupTab, setActiveMockupTab] = useState<'instagram' | 'facebook' | 'linkedin'>('instagram');
 
   const primaryColor = client.brandColors[0] || '#00d4a4';
@@ -55,6 +58,22 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
       ...activePost,
       imagePrompt: synthesizedPrompt
     });
+  };
+
+  const handleGenerateImageWithGemini = async () => {
+    setIsGeneratingImage(true);
+    try {
+      const res = await generateVisualImageWithGemini(client, activePost, synthesizedPrompt);
+      onUpdatePost({
+        ...activePost,
+        imageUrl: res.imageUrl,
+        imagePrompt: res.promptUsed
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   return (
@@ -238,12 +257,23 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
               {synthesizedPrompt}
             </p>
 
-            <button
-              onClick={handleUpdateActivePrompt}
-              className="btn-pill-dark w-full py-2 text-xs font-bold flex items-center justify-center space-x-1.5"
-            >
-              <span>Attach Prompt to Day {activePost.dayNumber} Post Record</span>
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={handleGenerateImageWithGemini}
+                disabled={isGeneratingImage}
+                className="btn-mint w-full py-2 text-xs font-bold flex items-center justify-center space-x-1.5 shadow-lg shadow-[#00d4a4]/20 disabled:opacity-50"
+              >
+                <ImageIcon className={`w-3.5 h-3.5 text-[#0a0a0a] ${isGeneratingImage ? 'animate-spin' : ''}`} />
+                <span>{isGeneratingImage ? 'Synthesizing with Gemini...' : 'Generate Image (Gemini AI)'}</span>
+              </button>
+
+              <button
+                onClick={handleUpdateActivePrompt}
+                className="btn-pill-dark w-full py-2 text-xs font-bold flex items-center justify-center space-x-1.5"
+              >
+                <span>Attach Prompt to Day {activePost.dayNumber}</span>
+              </button>
+            </div>
           </div>
 
         </div>

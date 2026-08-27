@@ -12,11 +12,12 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Sliders,
-  Trash2
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { generate30DayCalendar } from '../services/aiGenerator';
-import { generate30DayCalendarWithGemini } from '../services/geminiService';
+import { generate30DayCalendarWithGemini, generateVisualImageWithGemini } from '../services/geminiService';
 
 interface MonthContentPlannerProps {
   client: Client;
@@ -36,6 +37,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [generatingImagePostId, setGeneratingImagePostId] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<SocialPost | null>(null);
   const [showGenModal, setShowGenModal] = useState(false);
 
@@ -62,7 +64,8 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         ...client,
         posts: freshPosts
       });
-    } catch {
+    } catch (err) {
+      console.warn('Gemini 30-day generation error:', err);
       const customClient = {
         ...client,
         tone: genSettings.toneOverride || client.tone
@@ -75,6 +78,22 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     } finally {
       setIsRegenerating(false);
       setShowGenModal(false);
+    }
+  };
+
+  const handleGeneratePostImage = async (post: SocialPost) => {
+    setGeneratingImagePostId(post.id);
+    try {
+      const result = await generateVisualImageWithGemini(client, post);
+      const updatedPosts = posts.map(p => p.id === post.id ? { ...p, imageUrl: result.imageUrl, imagePrompt: result.promptUsed } : p);
+      onUpdateClient({
+        ...client,
+        posts: updatedPosts
+      });
+    } catch (err) {
+      console.error('Error generating image with Gemini:', err);
+    } finally {
+      setGeneratingImagePostId(null);
     }
   };
 
@@ -405,10 +424,20 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                 </button>
 
                 <button
+                  onClick={() => handleGeneratePostImage(post)}
+                  disabled={generatingImagePostId === post.id}
+                  className="btn-pill-dark py-1 px-2.5 text-[11px] font-semibold flex items-center justify-center space-x-1 border-[#00d4a4]/30 hover:border-[#00d4a4]/60 disabled:opacity-50"
+                  title="Generate Visual Image with Gemini AI & Brand Guide"
+                >
+                  <ImageIcon className={`w-3 h-3 text-[#00d4a4] ${generatingImagePostId === post.id ? 'animate-spin' : ''}`} />
+                  <span>{generatingImagePostId === post.id ? 'Generating...' : 'AI Image'}</span>
+                </button>
+
+                <button
                   onClick={() => onOpenStudioForPost(post)}
                   className="btn-pill-dark py-1 px-2.5 text-[11px] font-semibold flex items-center justify-center space-x-1"
                 >
-                  <Sparkles className="w-3 h-3 text-[#00d4a4]" />
+                  <Sparkles className="w-3 h-3 text-neutral-400" />
                   <span>Prompt</span>
                 </button>
 
