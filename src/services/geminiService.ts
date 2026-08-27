@@ -75,8 +75,7 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
     { title: `${client.name} — Case Studies & Proof`, url: `${client.websiteUrl.replace(/\/$/, '')}/case-studies`, summary: 'Verified client results and growth metrics.', keywords: ['case studies', 'results'] },
     { title: `${client.name} — Blog & Insights`, url: `${client.websiteUrl.replace(/\/$/, '')}/blog`, summary: 'Industry guides, strategy breakdowns, and trends.', keywords: ['insights', 'articles'] }
   ];
-
-  try {
+  try {
     const crawlData = await fetchLiveWebsiteMetadata(client.websiteUrl);
     liveTitle = crawlData.title || liveTitle;
     liveDescription = crawlData.description || liveDescription;
@@ -87,30 +86,32 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
     // Proceed with client context
   }
 
+  const livePagesContext = initialPages.map(p => `- Title: "${p.title}" | URL: ${p.url} | Summary: ${p.summary}`).join('\n');
+
   const prompt = `You are a world-class CMO, Senior Brand Designer, and Visual Strategist.
-Analyze the following company and produce an authentic, in-depth brand intelligence report and structured DESIGN.md guide in JSON format.
+Analyze the following company using their LIVE crawled website pages and metadata. Produce an authentic, in-depth brand intelligence report and structured DESIGN.md guide in JSON format.
 
 Company Name: ${client.name}
 Website URL: ${client.websiteUrl} (Domain: ${cleanDomain})
 Industry: ${client.industry}
 Brand Tone: ${client.tone}
 Target Audience: ${client.targetAudience}
-Scraped Metadata / Website Headline: "${liveTitle} — ${liveDescription}"
+Scraped Website Title & Description: "${liveTitle} — ${liveDescription}"
+
+ACTUAL CRAWLED LIVE SUBPAGES & CTA LINKS:
+${livePagesContext}
 
 Return a valid JSON object strictly matching this schema with NO markdown code fences around it:
 {
   "crawledPages": [
-    { "title": "${client.name} — Home & Platform", "url": "${client.websiteUrl}", "summary": "Core value proposition and landing CTA for ${client.name}", "keywords": ["innovation", "platform"] },
-    { "title": "${client.name} — Features & Solutions", "url": "${client.websiteUrl.replace(/\/$/, '')}/features", "summary": "Full product capabilities and tooling for ${client.name}", "keywords": ["tools", "efficiency"] },
-    { "title": "${client.name} — Case Studies & Proof", "url": "${client.websiteUrl.replace(/\/$/, '')}/case-studies", "summary": "Measurable customer ROI and testimonials", "keywords": ["proof", "roi"] },
-    { "title": "${client.name} — Resources & Insights", "url": "${client.websiteUrl.replace(/\/$/, '')}/blog", "summary": "Thought leadership and technical guides", "keywords": ["trends", "guides"] }
+    ${initialPages.map(p => `{"title": "${p.title.replace(/"/g, "'")}", "url": "${p.url}", "summary": "${p.summary.replace(/"/g, "'")}", "keywords": ${JSON.stringify(p.keywords)}}`).join(',\n    ')}
   ],
   "extractedTone": "${client.tone}",
   "visualMood": "Developer-grade minimalism with pitch dark surfaces (#0a0a0a), sharp hairline borders, and vivid accent CTAs.",
-  "contentPillars": ["Product Capabilities", "Industry Insights", "Customer Outcomes", "Engineering Excellence"],
-  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#Automation", "#Growth", "#Innovation"],
+  "contentPillars": ["Specific Pillar 1 for ${client.name}", "Specific Pillar 2 for ${client.name}", "Specific Pillar 3 for ${client.name}", "Specific Pillar 4 for ${client.name}"],
+  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#CustomTag1", "#CustomTag2"],
   "targetAudiencePersona": "${client.targetAudience || 'Modern decision-makers and teams'}",
-  "brandHealthScore": 96,
+  "brandHealthScore": 98,
   "designMd": "Complete Markdown Brand Guide following Zapier DESIGN.md sample format with Overview, Key Characteristics, Colors tokens {colors.primary}, Typography Hierarchy table, Elevation & Depth, Components, and AI Image Prompting Rules."
 }`;
 
@@ -121,13 +122,13 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
 
     return {
       analyzedAt: new Date().toISOString(),
-      crawledPages: parsed.crawledPages || initialPages,
+      crawledPages: (parsed.crawledPages && parsed.crawledPages.length > 0) ? parsed.crawledPages : initialPages,
       extractedTone: parsed.extractedTone || client.tone,
       visualMood: parsed.visualMood || 'Modern high-contrast dark mode with glowing accents',
       contentPillars: parsed.contentPillars || ['Product Capabilities', 'Industry Insights', 'Customer Outcomes', 'Engineering Excellence'],
       recommendedHashtagClusters: parsed.recommendedHashtagClusters || [`#${cleanDomain.replace(/\..*$/, '')}`, `#${client.name.replace(/\s+/g, '')}`, `#${client.industry.replace(/\s+/g, '')}`],
       targetAudiencePersona: parsed.targetAudiencePersona || client.targetAudience,
-      brandHealthScore: parsed.brandHealthScore || 96,
+      brandHealthScore: parsed.brandHealthScore || 98,
       designMd: parsed.designMd || generateFallbackDesignMd(client, cleanDomain)
     };
   } catch (err) {
