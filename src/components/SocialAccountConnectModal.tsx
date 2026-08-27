@@ -10,8 +10,10 @@ import {
   CheckSquare, 
   Square,
   UserCheck,
+  ExternalLink,
   X
 } from 'lucide-react';
+import { getLiveOAuthRedirectUrl } from '../config/env';
 import confetti from 'canvas-confetti';
 
 interface SocialAccountConnectModalProps {
@@ -36,16 +38,16 @@ const PLATFORM_PRESETS: Record<SocialPlatform, {
   mockAccounts: (clientName: string) => DiscoveredAccount[];
 }> = {
   facebook: {
-    name: 'Facebook Page',
+    name: 'Facebook Page & Business Manager',
     buttonLabel: 'Log in with Facebook',
     brandColor: '#1877F2',
     mockAccounts: (clientName) => [
-      { id: 'fb_page_1', handle: `${clientName.replace(/\s+/g, '')}Official`, name: `${clientName} Official Page`, followers: 48200, avatarUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80', selected: true },
+      { id: 'fb_page_1', handle: `${clientName.replace(/\s+/g, '')}Official`, name: `${clientName} Verified Page`, followers: 48200, avatarUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80', selected: true },
       { id: 'fb_page_2', handle: `${clientName.replace(/\s+/g, '')}Group`, name: `${clientName} Community Hub`, followers: 14500, avatarUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&auto=format&fit=crop&q=80', selected: false }
     ]
   },
   instagram: {
-    name: 'Instagram Business',
+    name: 'Instagram Business & Creator',
     buttonLabel: 'Log in with Instagram',
     brandColor: '#E4405F',
     mockAccounts: (clientName) => [
@@ -54,7 +56,7 @@ const PLATFORM_PRESETS: Record<SocialPlatform, {
     ]
   },
   linkedin: {
-    name: 'LinkedIn Company Page',
+    name: 'LinkedIn Organization & Company Page',
     buttonLabel: 'Log in with LinkedIn',
     brandColor: '#0A66C2',
     mockAccounts: (clientName) => [
@@ -63,7 +65,7 @@ const PLATFORM_PRESETS: Record<SocialPlatform, {
     ]
   },
   twitter: {
-    name: 'Twitter / X Account',
+    name: 'Twitter / X Developer Account',
     buttonLabel: 'Log in with Twitter',
     brandColor: '#ffffff',
     mockAccounts: (clientName) => [
@@ -71,7 +73,7 @@ const PLATFORM_PRESETS: Record<SocialPlatform, {
     ]
   },
   tiktok: {
-    name: 'TikTok Creator',
+    name: 'TikTok for Business',
     buttonLabel: 'Log in with TikTok',
     brandColor: '#00f2fe',
     mockAccounts: (clientName) => [
@@ -79,7 +81,7 @@ const PLATFORM_PRESETS: Record<SocialPlatform, {
     ]
   },
   pinterest: {
-    name: 'Pinterest Business',
+    name: 'Pinterest Business Catalog',
     buttonLabel: 'Log in with Pinterest',
     brandColor: '#E60023',
     mockAccounts: (clientName) => [
@@ -112,7 +114,7 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
     setTimeout(() => {
       setIsConnecting(false);
       setStep('select_page');
-    }, 500);
+    }, 400);
   };
 
   const handleTogglePageSelection = (accId: string) => {
@@ -136,7 +138,7 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
       pageId: `page_${item.id}`,
       accessToken: `token_${Math.random().toString(36).substring(2, 12)}`,
       connectedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      statusMessage: 'Connected & Active (Verified)'
+      statusMessage: 'OAuth 2.0 Connected & Active'
     }));
 
     onUpdateClient({
@@ -168,7 +170,7 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Connect Social Media Accounts</h3>
-              <p className="text-xs text-neutral-400">Link social accounts to <span className="text-[#00d4a4] font-semibold">{client.name}</span></p>
+              <p className="text-xs text-neutral-400">Authorize social accounts for <span className="text-[#00d4a4] font-semibold">{client.name}</span></p>
             </div>
           </div>
           <button
@@ -179,7 +181,7 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
           </button>
         </div>
 
-        {/* Simple 1-Click Platform Grid */}
+        {/* 1-Click Platform Grid */}
         {!activePlatform && (
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
@@ -263,7 +265,7 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
           </div>
         )}
 
-        {/* Clean Login & Page Picker Card */}
+        {/* Connection Popup Card */}
         {activePlatform && (
           <div className="bg-[#0a0a0a] border border-[#00d4a4]/40 rounded-2xl p-6 space-y-5 animate-fadeIn">
             
@@ -301,6 +303,19 @@ export const SocialAccountConnectModal: React.FC<SocialAccountConnectModalProps>
                   <div>
                     <h5 className="font-bold text-white text-sm">{userAccountName}</h5>
                     <p className="text-neutral-400 text-xs mt-0.5">Logged in social account manager</p>
+                  </div>
+
+                  {/* Optional Live Production Redirect URL Link */}
+                  <div className="pt-2 border-t border-[#26262a]">
+                    <a
+                      href={getLiveOAuthRedirectUrl(activePlatform)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#00d4a4] hover:underline font-mono-code text-[11px] inline-flex items-center gap-1 font-bold"
+                    >
+                      <span>Launch Live {activePlatform.toUpperCase()} Provider OAuth Page</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
 
