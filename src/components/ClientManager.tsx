@@ -58,12 +58,7 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
       tone: 'Professional & Authoritative',
       targetAudience: 'Business leaders, industry professionals, and consumers seeking modern solutions',
       brandColors: ['#00d4a4', '#3772cf', '#0a0a0a'],
-      socialAccounts: [
-        { id: `sa_fb_${Date.now()}`, platform: 'facebook', handle: 'OfficialPage', connected: true, followerCount: 15000 },
-        { id: `sa_ig_${Date.now()}`, platform: 'instagram', handle: '@official_brand', connected: true, followerCount: 42000 },
-        { id: `sa_li_${Date.now()}`, platform: 'linkedin', handle: 'company-brand', connected: true, followerCount: 28000 },
-        { id: `sa_tw_${Date.now()}`, platform: 'twitter', handle: '@BrandOfficial', connected: true, followerCount: 19500 }
-      ],
+      socialAccounts: [],
       createdAt: new Date().toISOString().split('T')[0],
       dailyScheduleEnabled: true,
       dailyScheduleTime: '09:00 AM'
