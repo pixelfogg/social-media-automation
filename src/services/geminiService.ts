@@ -12,33 +12,53 @@ export function getGeminiApiKey(): string {
 /**
  * Call Gemini AI model with prompt and temperature
  */
-async function callGeminiApi(prompt: string, model = 'gemini-1.5-flash'): Promise<string> {
+async function callGeminiApi(prompt: string): Promise<string> {
   const apiKey = getGeminiApiKey();
-
-  // Try official Google Generative Language REST Endpoint
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 3500
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => '');
-    throw new Error(`Gemini API Error (${response.status}): ${errorBody || response.statusText}`);
+  if (!apiKey) {
+    throw new Error('Gemini API key is not configured in .env');
   }
 
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini AI.');
-  return text;
+  // Model fallback candidate list
+  const candidateModels = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-pro'
+  ];
+
+  let lastError: any = null;
+
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 3500
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text;
+      } else {
+        const errText = await response.text().catch(() => '');
+        lastError = new Error(`Model ${model} returned ${response.status}: ${errText}`);
+      }
+    } catch (e: any) {
+      lastError = e;
+    }
+  }
+
+  throw lastError || new Error('All Gemini AI model endpoints failed.');
 }
 
 /**
