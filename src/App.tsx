@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { Client, SocialPost } from './types';
 import { 
   getClients, 
@@ -13,16 +14,18 @@ import { AuthScreen } from './components/AuthScreen';
 import { UserProfileModal } from './components/UserProfileModal';
 import { Navbar } from './components/Navbar';
 import { ClientManager } from './components/ClientManager';
-import { ClientDashboard } from './components/ClientDashboard';
+import { ClientDashboard, type ClientDashboardTab } from './components/ClientDashboard';
 import { SocialAccountConnectModal } from './components/SocialAccountConnectModal';
 import { DatabaseBackupModal } from './components/DatabaseBackupModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [activeClientId, setActiveId] = useState<string>('');
-  const [activeView, setActiveView] = useState<'clients_directory' | 'client_dashboard'>('client_dashboard');
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
@@ -44,6 +47,28 @@ export function App() {
     setActiveId(initialActiveId);
   };
 
+  // URL Path Synchronization
+  // Routes:
+  // /clients -> Clients Directory
+  // /dashboard/:clientId/:tab? -> Client Workspace Dashboard
+  useEffect(() => {
+    if (!currentUser || clients.length === 0) return;
+
+    const path = location.pathname;
+
+    if (path === '/' || path === '') {
+      // Default to active client workspace overview
+      navigate(`/dashboard/${activeClientId || clients[0].id}/overview`, { replace: true });
+    } else if (path.startsWith('/dashboard/')) {
+      const parts = path.split('/').filter(Boolean);
+      const urlClientId = parts[1];
+      if (urlClientId && urlClientId !== activeClientId && clients.some(c => c.id === urlClientId)) {
+        setActiveId(urlClientId);
+        setActiveClientId(urlClientId);
+      }
+    }
+  }, [location.pathname, clients, currentUser]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -52,6 +77,7 @@ export function App() {
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
     showToast(`Welcome back, ${user.name}!`);
+    navigate(`/dashboard/${activeClientId || (clients[0] && clients[0].id) || 'client_nexus_01'}/overview`);
   };
 
   const handleSignOut = () => {
@@ -59,6 +85,7 @@ export function App() {
     setCurrentUser(null);
     setShowUserProfileModal(false);
     showToast('Signed out of SocialPulse AI.');
+    navigate('/');
   };
 
   const handleSelectClient = (id: string) => {
@@ -68,7 +95,9 @@ export function App() {
     if (selected) {
       showToast(`Switched active workspace to "${selected.name}"`);
     }
-    setActiveView('client_dashboard');
+    // Get current tab from URL or default to overview
+    const currentTab = getActiveTabFromUrl();
+    navigate(`/dashboard/${id}/${currentTab}`);
   };
 
   const handleSaveClient = (client: Client) => {
@@ -77,7 +106,7 @@ export function App() {
     setActiveId(client.id);
     setActiveClientId(client.id);
     showToast(`Saved client profile & generated 30-day strategy for "${client.name}"`);
-    setActiveView('client_dashboard');
+    navigate(`/dashboard/${client.id}/overview`);
   };
 
   const handleDeleteClient = (id: string) => {
@@ -88,6 +117,9 @@ export function App() {
       const nextId = updatedList[0].id;
       setActiveId(nextId);
       setActiveClientId(nextId);
+      navigate(`/dashboard/${nextId}/overview`);
+    } else {
+      navigate('/clients');
     }
     if (clientToDelete) {
       showToast(`Deleted client "${clientToDelete.name}" from database.`);
@@ -106,6 +138,20 @@ export function App() {
     setClients(updatedList);
     showToast(`Updated Post Day ${updatedPost.dayNumber}`);
   };
+
+  // Helper to extract active tab from URL: /dashboard/:clientId/:tab
+  const getActiveTabFromUrl = (): ClientDashboardTab => {
+    const parts = location.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'dashboard' && parts[2]) {
+      const tab = parts[2] as ClientDashboardTab;
+      if (['overview', 'brand_guide_md', 'planner', 'studio', 'publisher'].includes(tab)) {
+        return tab;
+      }
+    }
+    return 'overview';
+  };
+
+  const isClientsDirectoryView = location.pathname === '/clients';
 
   // If user is not authenticated, render Better Auth Gateway
   if (!currentUser) {
@@ -171,18 +217,18 @@ export function App() {
         activeClient={activeClient}
         currentUser={currentUser}
         onSelectClient={handleSelectClient}
-        onOpenCreateClientModal={() => setActiveView('clients_directory')}
+        onOpenCreateClientModal={() => navigate('/clients')}
         onOpenDatabaseBackupModal={() => setShowBackupModal(true)}
         onOpenUserProfileModal={() => setShowUserProfileModal(true)}
-        onViewAllClients={() => setActiveView('clients_directory')}
-        activeView={activeView}
+        onViewAllClients={() => navigate('/clients')}
+        activeView={isClientsDirectoryView ? 'clients_directory' : 'client_dashboard'}
       />
 
       {/* Main Workspace Canvas */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
-        {/* View 1: Clients Portfolio Directory */}
-        {activeView === 'clients_directory' && (
+        {/* View 1: Clients Portfolio Directory (/clients) */}
+        {isClientsDirectoryView && (
           <ClientManager
             clients={clients}
             activeClient={activeClient}
@@ -191,16 +237,18 @@ export function App() {
             onDeleteClient={handleDeleteClient}
             onOpenDashboard={(id) => {
               handleSelectClient(id);
-              setActiveView('client_dashboard');
+              navigate(`/dashboard/${id}/overview`);
             }}
             onOpenConnectSocialModal={() => setShowConnectModal(true)}
           />
         )}
 
-        {/* View 2: Active Client Workspace Dashboard with Sub-Tabs */}
-        {activeView === 'client_dashboard' && (
+        {/* View 2: Active Client Workspace Dashboard with Sub-Tabs (/dashboard/:clientId/:tab) */}
+        {!isClientsDirectoryView && (
           <ClientDashboard
             client={activeClient}
+            activeTab={getActiveTabFromUrl()}
+            onTabChange={(tab) => navigate(`/dashboard/${activeClient.id}/${tab}`)}
             onUpdateClient={handleUpdateActiveClient}
             onUpdatePost={handleUpdatePost}
             onOpenConnectSocialModal={() => setShowConnectModal(true)}

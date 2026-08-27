@@ -16,13 +16,6 @@ import {
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 
-interface ClientDashboardProps {
-  client: Client;
-  onUpdateClient: (updatedClient: Client) => void;
-  onUpdatePost: (updatedPost: SocialPost) => void;
-  onOpenConnectSocialModal: () => void;
-}
-
 export type ClientDashboardTab = 
   | 'overview' 
   | 'brand_guide_md' 
@@ -30,15 +23,36 @@ export type ClientDashboardTab =
   | 'studio' 
   | 'publisher';
 
+interface ClientDashboardProps {
+  client: Client;
+  activeTab?: ClientDashboardTab;
+  onTabChange?: (tab: ClientDashboardTab) => void;
+  onUpdateClient: (updatedClient: Client) => void;
+  onUpdatePost: (updatedPost: SocialPost) => void;
+  onOpenConnectSocialModal: () => void;
+}
+
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   client,
+  activeTab: controlledTab,
+  onTabChange,
   onUpdateClient,
   onUpdatePost,
   onOpenConnectSocialModal
 }) => {
-  const [activeTab, setActiveTab] = useState<ClientDashboardTab>('overview');
+  const [internalTab, setInternalTab] = useState<ClientDashboardTab>('overview');
   const [selectedStudioPost, setSelectedStudioPost] = useState<SocialPost | null>(null);
   const [selectedPublisherPost, setSelectedPublisherPost] = useState<SocialPost | null>(null);
+
+  const activeTab = controlledTab || internalTab;
+
+  const handleTabClick = (tab: ClientDashboardTab) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      setInternalTab(tab);
+    }
+  };
 
   const posts = client.posts || [];
   const socialAccounts = client.socialAccounts || [];
@@ -109,7 +123,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       <div className="bg-[#141416] border border-[#26262a] rounded-xl p-1.5 flex flex-wrap items-center justify-between gap-1 shadow-sm">
         <div className="flex flex-wrap items-center gap-1 w-full sm:w-auto">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleTabClick('overview')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'overview'
                 ? 'bg-[#00d4a4] text-[#0a0a0a]'
@@ -121,7 +135,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('brand_guide_md')}
+            onClick={() => handleTabClick('brand_guide_md')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'brand_guide_md'
                 ? 'bg-[#00d4a4] text-[#0a0a0a]'
@@ -133,7 +147,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('planner')}
+            onClick={() => handleTabClick('planner')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'planner'
                 ? 'bg-[#00d4a4] text-[#0a0a0a]'
@@ -145,7 +159,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('studio')}
+            onClick={() => handleTabClick('studio')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'studio'
                 ? 'bg-[#00d4a4] text-[#0a0a0a]'
@@ -157,7 +171,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('publisher')}
+            onClick={() => handleTabClick('publisher')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'publisher'
                 ? 'bg-[#00d4a4] text-[#0a0a0a]'
@@ -192,13 +206,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <MonthContentPlanner
             client={client}
             onUpdateClient={onUpdateClient}
-            onOpenStudioForPost={(post) => {
+            onOpenStudioForPost={(post: SocialPost) => {
               setSelectedStudioPost(post);
-              setActiveTab('studio');
+              handleTabClick('studio');
             }}
-            onOpenPublisherForPost={(post) => {
+            onOpenPublisherForPost={(post: SocialPost) => {
               setSelectedPublisherPost(post);
-              setActiveTab('publisher');
+              handleTabClick('publisher');
             }}
           />
         )}
@@ -213,7 +227,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           />
         )}
 
-        {/* Tab 5: Publishing Queue & Push Scheduler */}
+        {/* Tab 5: Publishing Hub & Daily Push Scheduler */}
         {activeTab === 'publisher' && (
           <PublisherQueue
             client={client}
