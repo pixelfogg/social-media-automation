@@ -329,6 +329,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
               {/* Visual Asset Container */}
               <div className="relative aspect-video bg-[#0a0a0a] overflow-hidden border-b border-[#26262a]">
                 <PostGraphicCard
+                  key={post.imageUrl || post.id}
                   post={post}
                   primaryColor={client.brandColors[0] || '#00d4a4'}
                   secondaryColor={client.brandColors[1] || '#3772cf'}
@@ -410,6 +411,17 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     <span className="text-[10px] text-neutral-500">+{post.hashtags.length - 3}</span>
                   )}
                 </div>
+
+                {/* Gemini Prompt Indicator */}
+                {post.imagePrompt && (
+                  <div className="text-[10px] text-neutral-400 bg-[#0a0a0a] p-2 rounded-lg border border-[#26262a] font-mono-code space-y-1">
+                    <div className="flex items-center space-x-1 text-[#00d4a4] font-bold">
+                      <Sparkles className="w-2.5 h-2.5" />
+                      <span>DESIGN.md Prompt:</span>
+                    </div>
+                    <p className="line-clamp-2 text-neutral-300">{post.imagePrompt}</p>
+                  </div>
+                )}
               </div>
             </div>
 
