@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { betterAuth, type AuthUser, type UserSession } from '../services/betterAuth';
-import { getGeminiApiKey, saveGeminiApiKey } from '../services/geminiService';
 import { 
   Smartphone, 
   Laptop, 
   LogOut, 
   X, 
   QrCode,
-  Trash2,
-  Sparkles,
-  Key,
-  CheckCircle2
+  Trash2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -27,12 +23,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onSignOut,
   onClose
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'gemini_api' | 'sessions'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'sessions'>('profile');
   const [twoFactorActive, setTwoFactorActive] = useState(user.twoFactorEnabled);
   const [sessions, setSessions] = useState<UserSession[]>(betterAuth.getUserSessions(user.id));
   const [copiedKey, setCopiedKey] = useState(false);
-  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState(getGeminiApiKey());
-  const [apiKeySaved, setApiKeySaved] = useState(false);
 
   const handleToggle2FA = () => {
     const nextState = !twoFactorActive;
@@ -59,14 +53,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
-  const handleSaveApiKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveGeminiApiKey(geminiApiKeyInput);
-    setApiKeySaved(true);
-    confetti({ particleCount: 50, spread: 40, origin: { y: 0.6 } });
-    setTimeout(() => setApiKeySaved(false), 2500);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-2xl">
@@ -86,7 +72,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-1 bg-[#0a0a0a] p-1 rounded-xl border border-[#26262a] text-xs font-semibold">
+        <div className="flex items-center space-x-1.5 bg-[#0a0a0a] p-1 rounded-xl border border-[#26262a] text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
@@ -96,19 +82,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            Profile
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('gemini_api')}
-            className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center space-x-1 ${
-              activeTab === 'gemini_api'
-                ? 'bg-[#00d4a4] text-[#0a0a0a] font-bold'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3 h-3" />
-            <span>Gemini AI</span>
+            Profile & Role
           </button>
           <button
             type="button"
@@ -119,7 +93,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            2FA
+            2FA & Security
           </button>
           <button
             type="button"
@@ -130,7 +104,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            Sessions ({sessions.length})
+            Active Sessions ({sessions.length})
           </button>
         </div>
 
@@ -173,51 +147,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           </div>
         )}
 
-        {/* Tab 2: Gemini AI Key Configuration */}
-        {activeTab === 'gemini_api' && (
-          <form onSubmit={handleSaveApiKey} className="space-y-4 text-xs">
-            <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-4 space-y-3">
-              <div className="flex items-center space-x-2 text-white font-bold">
-                <Sparkles className="w-4 h-4 text-[#00d4a4]" />
-                <span>Google Gemini AI Engine</span>
-              </div>
-              <p className="text-[11px] text-neutral-400 leading-relaxed">
-                Powers real-time website crawling, authentic brand voice discovery, DESIGN.md generation, and 30-day viral content writing.
-              </p>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">
-                  Active Gemini API Key
-                </label>
-                <div className="relative">
-                  <Key className="w-4 h-4 text-neutral-500 absolute left-3 top-2.5" />
-                  <input
-                    type="password"
-                    value={geminiApiKeyInput}
-                    onChange={(e) => setGeminiApiKeyInput(e.target.value)}
-                    placeholder="AQ.Ab8RN6KU..."
-                    className="w-full bg-[#141416] border border-[#26262a] rounded-lg pl-9 pr-3 py-2 text-white font-mono-code focus:outline-none focus:border-[#00d4a4]"
-                  />
-                </div>
-              </div>
-
-              {apiKeySaved && (
-                <div className="flex items-center space-x-2 text-[#00d4a4] font-mono-code text-[11px]">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Gemini API Key saved and active!</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-1">
-              <button type="submit" className="btn-mint px-5 py-2 font-bold">
-                Save API Key
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Tab 3: 2FA & TOTP Authenticator */}
+        {/* Tab 2: 2FA & TOTP Authenticator */}
         {activeTab === 'security' && (
           <div className="space-y-4 text-xs">
             <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-4 space-y-4">
@@ -273,7 +203,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           </div>
         )}
 
-        {/* Tab 4: Sessions */}
+        {/* Tab 3: Sessions */}
         {activeTab === 'sessions' && (
           <div className="space-y-4 text-xs">
             <div className="space-y-2 max-h-60 overflow-y-auto">

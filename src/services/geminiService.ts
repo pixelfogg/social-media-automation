@@ -5,16 +5,8 @@
 import type { Client, BrandAnalysis, SocialPost } from '../types';
 import { fetchLiveWebsiteMetadata } from './webCrawlerService';
 
-const GEMINI_API_KEY_STORAGE_KEY = 'socialpulse_gemini_api_key';
-
 export function getGeminiApiKey(): string {
-  const custom = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
-  if (custom && custom.trim().length > 0) return custom.trim();
   return import.meta.env.VITE_GEMINI_API_KEY || '';
-}
-
-export function saveGeminiApiKey(key: string) {
-  localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, key.trim());
 }
 
 /**
