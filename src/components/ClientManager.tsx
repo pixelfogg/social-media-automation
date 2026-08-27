@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { analyzeBrandAndWebsite, generate30DayCalendar } from '../services/aiGenerator';
+import { analyzeWebsiteWithGemini, generate30DayCalendarWithGemini } from '../services/geminiService';
 
 interface ClientManagerProps {
   clients: Client[];
@@ -70,7 +71,7 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
     setShowModal(true);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingClient || !editingClient.name) return;
 
@@ -79,11 +80,11 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
       name: editingClient.name,
       logoUrl: editingClient.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80',
       websiteUrl: editingClient.websiteUrl || 'https://example.com',
-      industry: editingClient.industry || 'Technology',
+      industry: editingClient.industry || 'Technology & Digital Services',
       brandGuideText: editingClient.brandGuideText || '',
       tone: editingClient.tone || 'Professional & Authoritative',
-      targetAudience: editingClient.targetAudience || '',
-      brandColors: editingClient.brandColors || ['#00d4a4', '#1c1c1e'],
+      targetAudience: editingClient.targetAudience || 'Modern teams and consumers',
+      brandColors: editingClient.brandColors || ['#00d4a4', '#3772cf', '#0a0a0a'],
       socialAccounts: editingClient.socialAccounts || [],
       posts: editingClient.posts || [],
       createdAt: editingClient.createdAt || new Date().toISOString().split('T')[0],
@@ -91,11 +92,17 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
       dailyScheduleTime: editingClient.dailyScheduleTime || '09:00 AM'
     };
 
-    if (!fullClient.brandAnalysis) {
-      fullClient.brandAnalysis = analyzeBrandAndWebsite(fullClient);
-    }
-    if (!fullClient.posts || fullClient.posts.length === 0) {
-      fullClient.posts = generate30DayCalendar(fullClient);
+    // Process with Gemini AI for instant authentic data
+    try {
+      fullClient.brandAnalysis = await analyzeWebsiteWithGemini(fullClient);
+      fullClient.posts = await generate30DayCalendarWithGemini(fullClient);
+    } catch (err) {
+      if (!fullClient.brandAnalysis) {
+        fullClient.brandAnalysis = analyzeBrandAndWebsite(fullClient);
+      }
+      if (!fullClient.posts || fullClient.posts.length === 0) {
+        fullClient.posts = generate30DayCalendar(fullClient);
+      }
     }
 
     onSaveClient(fullClient);

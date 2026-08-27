@@ -3,24 +3,23 @@ import type { Client, BrandAnalysis } from '../types';
 import { getSocialIcon } from './SocialIcons';
 import { 
   Globe, 
-  RefreshCw, 
-  CheckCircle2, 
-  Layers, 
-  Palette, 
-  Hash, 
-  Target, 
-  ShieldCheck, 
-  ExternalLink,
-  Cpu,
-  Key,
+  FileCode, 
+  ExternalLink, 
+  Key, 
+  Sparkles,
+  Check,
   Share2,
   Plus,
-  FileCode,
-  Copy,
-  Check
+  ShieldCheck,
+  Layers,
+  Palette,
+  CheckCircle2,
+  Target,
+  Hash,
+  Copy
 } from 'lucide-react';
 import { analyzeBrandAndWebsite } from '../services/aiGenerator';
-import { fetchLiveWebsiteMetadata } from '../services/webCrawlerService';
+import { analyzeWebsiteWithGemini, generate30DayCalendarWithGemini } from '../services/geminiService';
 
 interface BrandAnalyzerProps {
   client: Client;
@@ -45,22 +44,22 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
 
   const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
-    setProgressMessage(`Connecting live network socket to ${client.websiteUrl}...`);
+    setProgressMessage(`Connecting Gemini AI & live network socket to ${client.websiteUrl}...`);
 
     try {
-      const crawlRes = await fetchLiveWebsiteMetadata(client.websiteUrl);
-      setProgressMessage(`Parsed OpenGraph metadata for "${crawlRes.title}". Building DESIGN.md...`);
-
-      const updatedAnalysis = analyzeBrandAndWebsite(client);
-      if (crawlRes.crawledPages && crawlRes.crawledPages.length > 0) {
-        updatedAnalysis.crawledPages = crawlRes.crawledPages;
-      }
+      setProgressMessage(`Gemini AI analyzing brand voice, visual tokens, and subpages for ${client.name}...`);
+      const updatedAnalysis = await analyzeWebsiteWithGemini(client);
+      
+      setProgressMessage(`Synthesizing 30-Day Gemini AI content strategy...`);
+      const updatedPosts = await generate30DayCalendarWithGemini(client);
 
       onUpdateClient({
         ...client,
-        brandAnalysis: updatedAnalysis
+        brandAnalysis: updatedAnalysis,
+        posts: updatedPosts
       });
     } catch (err) {
+      console.warn('Analysis fallback:', err);
       const updatedAnalysis = analyzeBrandAndWebsite(client);
       onUpdateClient({
         ...client,
@@ -85,8 +84,8 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-2">
             <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#00d4a4]/10 text-[#00d4a4] border border-[#00d4a4]/20 flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-[#00d4a4]" />
-              Client Dashboard & Intelligence
+              <Sparkles className="w-3.5 h-3.5 text-[#00d4a4]" />
+              Powered by Google Gemini AI
             </span>
             <span className="text-xs text-neutral-400">Client: <strong className="text-white">{client.name}</strong></span>
           </div>
@@ -98,22 +97,22 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onOpenConnectSocialModal}
-            className="btn-mint flex items-center space-x-2 px-5 py-2.5 text-xs font-bold shadow-sm"
-          >
-            <Key className="w-4 h-4 text-[#0a0a0a]" />
-            <span>Connect Accounts for {client.name}</span>
-          </button>
-
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleRunAnalysis}
             disabled={isAnalyzing}
-            className="btn-pill-dark flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold disabled:opacity-50"
+            className="btn-mint flex items-center space-x-2 px-5 py-2.5 text-xs font-extrabold shadow-lg shadow-[#00d4a4]/20 disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 text-[#00d4a4] ${isAnalyzing ? 'animate-spin' : ''}`} />
-            <span>{isAnalyzing ? 'Crawling & Generating Brand Guide...' : 'Re-Crawl Site & Build DESIGN.md'}</span>
+            <Sparkles className={`w-4 h-4 text-[#0a0a0a] ${isAnalyzing ? 'animate-spin' : ''}`} />
+            <span>{isAnalyzing ? 'Gemini AI Analyzing Site...' : 'Run Website & Brand Analysis (Gemini AI)'}</span>
+          </button>
+
+          <button
+            onClick={onOpenConnectSocialModal}
+            className="btn-pill-dark flex items-center space-x-2 px-4 py-2.5 text-xs font-bold"
+          >
+            <Key className="w-4 h-4 text-[#00d4a4]" />
+            <span>Connect Accounts</span>
           </button>
         </div>
       </div>
