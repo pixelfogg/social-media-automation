@@ -14,8 +14,8 @@ import {
   Key
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
-import { analyzeBrandAndWebsite, generate30DayCalendar } from '../services/aiGenerator';
-import { analyzeWebsiteWithGemini, generate30DayCalendarWithGemini } from '../services/geminiService';
+import { analyzeBrandAndWebsite } from '../services/aiGenerator';
+import { analyzeWebsiteWithGemini } from '../services/geminiService';
 
 interface ClientManagerProps {
   clients: Client[];
@@ -87,16 +87,12 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
       dailyScheduleTime: editingClient.dailyScheduleTime || '09:00 AM'
     };
 
-    // Process with Gemini AI for instant authentic data
+    // Process with Gemini AI for instant authentic brand analysis only
     try {
       fullClient.brandAnalysis = await analyzeWebsiteWithGemini(fullClient);
-      fullClient.posts = await generate30DayCalendarWithGemini(fullClient);
     } catch (err) {
       if (!fullClient.brandAnalysis) {
         fullClient.brandAnalysis = analyzeBrandAndWebsite(fullClient);
-      }
-      if (!fullClient.posts || fullClient.posts.length === 0) {
-        fullClient.posts = generate30DayCalendar(fullClient);
       }
     }
 

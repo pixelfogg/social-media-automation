@@ -11,7 +11,8 @@ import {
   Download,
   FileSpreadsheet,
   CheckCircle2,
-  Sliders
+  Sliders,
+  Trash2
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { generate30DayCalendar } from '../services/aiGenerator';
@@ -132,6 +133,23 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     setEditingPost(null);
   };
 
+  const handleDeletePost = (postId: string) => {
+    const updatedPosts = posts.filter(p => p.id !== postId);
+    onUpdateClient({
+      ...client,
+      posts: updatedPosts
+    });
+  };
+
+  const handleClearAllPosts = () => {
+    if (window.confirm(`Are you sure you want to clear all posts for ${client.name}?`)) {
+      onUpdateClient({
+        ...client,
+        posts: []
+      });
+    }
+  };
+
   const filteredPosts = posts.filter(post => {
     const matchesSearch = 
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -192,13 +210,24 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <span>Approve All Drafts</span>
           </button>
 
+          {posts.length > 0 && (
+            <button
+              onClick={handleClearAllPosts}
+              className="px-3 py-2 text-xs font-semibold rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 flex items-center space-x-1.5"
+              title="Clear all generated posts for this client"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear Posts</span>
+            </button>
+          )}
+
           <button
             onClick={() => handleRegenerateMonth()}
             disabled={isRegenerating}
             className="btn-mint flex items-center space-x-2 px-4 py-2 text-xs font-bold shadow-lg shadow-[#00d4a4]/20 disabled:opacity-50"
           >
             <Sparkles className={`w-3.5 h-3.5 text-[#0a0a0a] ${isRegenerating ? 'animate-spin' : ''}`} />
-            <span>{isRegenerating ? 'Gemini AI Generating 30 Posts...' : 'Generate 30-Day Posts (Gemini AI)'}</span>
+            <span>{isRegenerating ? 'Gemini AI Generating 30 Posts...' : (posts.length === 0 ? 'Generate 30-Day Posts (Gemini AI)' : 'Re-Generate 30 Posts (Gemini AI)')}</span>
           </button>
 
           <button
@@ -365,34 +394,67 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             </div>
 
             {/* Actions Bar */}
-            <div className="p-3 pt-0 grid grid-cols-3 gap-1.5 border-t border-[#26262a] mt-2 pt-2">
-              <button
-                onClick={() => setEditingPost(post)}
-                className="btn-pill-dark py-1.5 text-[11px] font-semibold flex items-center justify-center space-x-1"
-              >
-                <Edit3 className="w-3 h-3 text-neutral-400" />
-                <span>Edit</span>
-              </button>
+            <div className="p-3 pt-0 flex items-center justify-between gap-1.5 border-t border-[#26262a] mt-2 pt-2">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setEditingPost(post)}
+                  className="btn-pill-dark py-1 px-2.5 text-[11px] font-semibold flex items-center justify-center space-x-1"
+                >
+                  <Edit3 className="w-3 h-3 text-neutral-400" />
+                  <span>Edit</span>
+                </button>
+
+                <button
+                  onClick={() => onOpenStudioForPost(post)}
+                  className="btn-pill-dark py-1 px-2.5 text-[11px] font-semibold flex items-center justify-center space-x-1"
+                >
+                  <Sparkles className="w-3 h-3 text-[#00d4a4]" />
+                  <span>Prompt</span>
+                </button>
+
+                <button
+                  onClick={() => onOpenPublisherForPost(post)}
+                  className="btn-mint py-1 px-2.5 text-[11px] font-bold flex items-center justify-center space-x-1 shadow-sm"
+                >
+                  <Send className="w-3 h-3" />
+                  <span>Publish</span>
+                </button>
+              </div>
 
               <button
-                onClick={() => onOpenStudioForPost(post)}
-                className="btn-pill-dark py-1.5 text-[11px] font-semibold flex items-center justify-center space-x-1"
+                onClick={() => handleDeletePost(post.id)}
+                className="p-1.5 text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                title="Delete this post"
               >
-                <Sparkles className="w-3 h-3 text-[#00d4a4]" />
-                <span>AI Prompt</span>
-              </button>
-
-              <button
-                onClick={() => onOpenPublisherForPost(post)}
-                className="btn-mint py-1.5 text-[11px] font-bold flex items-center justify-center space-x-1 shadow-sm"
-              >
-                <Send className="w-3 h-3" />
-                <span>Publish</span>
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Empty State when no posts generated yet */}
+      {filteredPosts.length === 0 && (
+        <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-12 text-center space-y-4 max-w-xl mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-[#00d4a4]/10 border border-[#00d4a4]/20 flex items-center justify-center mx-auto text-[#00d4a4]">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-white">No Content Posts Generated Yet</h3>
+            <p className="text-xs text-neutral-400">
+              Click the button below to generate a tailored 30-day viral content strategy for <strong className="text-white">{client.name}</strong> using Gemini AI.
+            </p>
+          </div>
+          <button
+            onClick={() => handleRegenerateMonth()}
+            disabled={isRegenerating}
+            className="btn-mint px-6 py-2.5 text-xs font-bold shadow-lg shadow-[#00d4a4]/20 inline-flex items-center space-x-2"
+          >
+            <Sparkles className={`w-4 h-4 text-[#0a0a0a] ${isRegenerating ? 'animate-spin' : ''}`} />
+            <span>{isRegenerating ? 'Gemini AI Generating 30 Posts...' : 'Generate 30-Day Posts (Gemini AI)'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Custom Generation Modal */}
       {showGenModal && (
