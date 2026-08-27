@@ -328,18 +328,27 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
               {/* Image Preview */}
               <div className="relative aspect-video bg-[#0a0a0a] overflow-hidden border-b border-[#26262a]">
                 <img
+                  key={post.imageUrl}
                   src={post.imageUrl}
                   alt={post.title}
                   className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                 />
                 
+                {/* Generation Loading Overlay */}
+                {generatingImagePostId === post.id && (
+                  <div className="absolute inset-0 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-20">
+                    <Sparkles className="w-6 h-6 text-[#00d4a4] animate-spin" />
+                    <span className="text-[11px] font-bold text-white">Synthesizing with Gemini...</span>
+                  </div>
+                )}
+                
                 {/* Day Badge */}
-                <div className="absolute top-2.5 left-2.5 bg-[#0a0a0a]/90 border border-[#26262a] text-white font-mono-code font-bold text-[10px] px-2.5 py-0.5 rounded-full shadow">
+                <div className="absolute top-2.5 left-2.5 bg-[#0a0a0a]/90 border border-[#26262a] text-white font-mono-code font-bold text-[10px] px-2.5 py-0.5 rounded-full shadow z-10">
                   DAY {post.dayNumber}
                 </div>
 
                 {/* Status Badge */}
-                <div className="absolute top-2.5 right-2.5">
+                <div className="absolute top-2.5 right-2.5 z-10">
                   <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                     post.status === 'published'
                       ? 'bg-[#00d4a4]/20 text-[#00d4a4] border border-[#00d4a4]/30'
