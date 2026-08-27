@@ -8,6 +8,9 @@ import {
   deleteClient, 
   updatePostInClient 
 } from './services/db';
+import { betterAuth, type AuthUser } from './services/betterAuth';
+import { AuthScreen } from './components/AuthScreen';
+import { UserProfileModal } from './components/UserProfileModal';
 import { Navbar } from './components/Navbar';
 import { ClientManager } from './components/ClientManager';
 import { ClientDashboard } from './components/ClientDashboard';
@@ -16,12 +19,23 @@ import { DatabaseBackupModal } from './components/DatabaseBackupModal';
 import { CheckCircle2 } from 'lucide-react';
 
 export function App() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [activeClientId, setActiveId] = useState<string>('');
   const [activeView, setActiveView] = useState<'clients_directory' | 'client_dashboard'>('client_dashboard');
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Initialize Better Auth Session & Database
+  useEffect(() => {
+    const sessionData = betterAuth.getSession();
+    if (sessionData) {
+      setCurrentUser(sessionData.user);
+    }
+    refreshWorkspaceData();
+  }, []);
 
   const refreshWorkspaceData = () => {
     const loadedClients = getClients();
@@ -30,13 +44,21 @@ export function App() {
     setActiveId(initialActiveId);
   };
 
-  useEffect(() => {
-    refreshWorkspaceData();
-  }, []);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleAuthSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    showToast(`Welcome back, ${user.name}!`);
+  };
+
+  const handleSignOut = () => {
+    betterAuth.signOut();
+    setCurrentUser(null);
+    setShowUserProfileModal(false);
+    showToast('Signed out of SocialPulse AI.');
   };
 
   const handleSelectClient = (id: string) => {
@@ -85,6 +107,11 @@ export function App() {
     showToast(`Updated Post Day ${updatedPost.dayNumber}`);
   };
 
+  // If user is not authenticated, render Better Auth Gateway
+  if (!currentUser) {
+    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
+  }
+
   const activeClient = clients.find(c => c.id === activeClientId) || clients[0];
 
   if (!activeClient) {
@@ -111,6 +138,16 @@ export function App() {
         </div>
       )}
 
+      {/* User Profile & Security Settings Modal */}
+      {showUserProfileModal && (
+        <UserProfileModal
+          user={currentUser}
+          onUpdateUser={setCurrentUser}
+          onSignOut={handleSignOut}
+          onClose={() => setShowUserProfileModal(false)}
+        />
+      )}
+
       {/* Social Account Connect & Authorization Modal */}
       {showConnectModal && (
         <SocialAccountConnectModal
@@ -128,13 +165,15 @@ export function App() {
         />
       )}
 
-      {/* Sleek Global Header Bar */}
+      {/* Sleek Global Header Bar with Better Auth Profile */}
       <Navbar
         clients={clients}
         activeClient={activeClient}
+        currentUser={currentUser}
         onSelectClient={handleSelectClient}
         onOpenCreateClientModal={() => setActiveView('clients_directory')}
         onOpenDatabaseBackupModal={() => setShowBackupModal(true)}
+        onOpenUserProfileModal={() => setShowUserProfileModal(true)}
         onViewAllClients={() => setActiveView('clients_directory')}
         activeView={activeView}
       />
