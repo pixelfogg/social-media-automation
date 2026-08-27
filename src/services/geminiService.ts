@@ -421,7 +421,7 @@ Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
       ? aiItem.hashtags 
       : [`#${cleanDomain.split('.')[0]}`, `#${client.name.replace(/\s+/g, '')}`, `#${category.replace(/[^a-zA-Z]/g, '')}`, '#Automation', '#Growth'];
 
-    const imagePrompt = aiItem?.imagePrompt || `Clean modern 3D visual graphic for "${title}", ${primaryColor} glowing neon edge lighting, dark pitch black background, octane render, 8k --v 6.0 --ar 1:1`;
+    const imagePrompt = aiItem?.imagePrompt || `High-end commercial brand visual for "${title}" according to ${client.name} DESIGN.md (${cleanDomain}). 3D isometric glassmorphism & engineering precision, obsidian primary (#020617) with slate (#334155) accents, warm off-white canvas backdrop (#F9F8F6), soft ambient lighting, Octane Render 3D, 8k resolution, ray-tracing reflections, hyper-detailed --v 6.0 --ar 1:1 --style raw`;
     const targetUrl = fallbackTopic.ctaUrl;
 
     return {

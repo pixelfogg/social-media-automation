@@ -35,8 +35,10 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [activeMockupTab, setActiveMockupTab] = useState<'instagram' | 'facebook' | 'linkedin'>('instagram');
 
-  const primaryColor = client.brandColors[0] || '#00d4a4';
-  const darkCanvas = client.brandColors[2] || '#0a0a0a';
+  const primaryColor = client.brandColors[0] || '#020617';
+  const secondaryColor = client.brandColors[1] || '#334155';
+  const canvasColor = client.brandColors[2] || '#F9F8F6';
+  const cleanDomain = client.websiteUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 
   if (!activePost) {
     return (
@@ -46,7 +48,13 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
     );
   }
 
-  const synthesizedPrompt = `Ultra-modern visual graphic for "${activePost.title}". Designed following ${client.name} Brand Guide (DESIGN.md). Environment: ${lighting} in dark canvas ${darkCanvas}. Key Visual Features: ${promptStyle}, glowing accents in primary color ${primaryColor}, clean 12px rounded cards, high contrast typography overlays, 8k resolution, cinematic lighting --v 6.0 ${aspectRatio}`;
+  // Full-fidelity prompt generator incorporating complete DESIGN.md specifications
+  const synthesizedPrompt = `High-end commercial brand asset for "${activePost.title}". Designed strictly in accordance with ${client.name}'s DESIGN.md Brand Guidelines (${cleanDomain}).
+Visual Subject & Concept: ${promptStyle} representing ${activePost.category} for ${client.name} in the ${client.industry} domain.
+Color Palette & Materials: Primary obsidian tone (${primaryColor}), dark slate accents (${secondaryColor}), warm off-white canvas backdrop (${canvasColor}), premium frosted glassmorphism with subtle hairline border reflections (#26262a).
+Atmosphere & Lighting: ${lighting}, volumetric soft shadows, refined global illumination, cinematic depth of field.
+Composition & Typography Rules: Bold geometric headline space (Clash Display / Satoshi typography matrix), minimal technical overlines (JetBrains Mono style), negative space for UI overlays, razor-sharp clean edges.
+Style & Render Specs: Octane Render 3D, commercial studio product photography, 8k resolution, photorealistic textures, hyper-detailed craftsmanship, ray tracing reflections, award-winning Behance/Dribbble showcase --ar ${aspectRatio.replace('--ar ', '')} --v 6.0 --style raw --q 2`;
 
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(synthesizedPrompt);
@@ -168,16 +176,19 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
               </div>
 
               <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-3 space-y-1">
-                <span className="text-[10px] text-neutral-500 font-mono-code">Dark Canvas</span>
+                <span className="text-[10px] text-neutral-500 font-mono-code">Canvas Surface</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: darkCanvas }} />
-                  <span className="font-bold text-white font-mono-code">{darkCanvas}</span>
+                  <div className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: canvasColor }} />
+                  <span className="font-bold text-white font-mono-code">{canvasColor}</span>
                 </div>
               </div>
 
               <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-3 space-y-1">
-                <span className="text-[10px] text-neutral-500 font-mono-code">Shape Radius</span>
-                <span className="font-bold text-[#00d4a4] font-mono-code">rounded-md (12px)</span>
+                <span className="text-[10px] text-neutral-500 font-mono-code">Secondary Accent</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3.5 h-3.5 rounded-full border border-white/20" style={{ backgroundColor: secondaryColor }} />
+                  <span className="font-bold text-white font-mono-code">{secondaryColor}</span>
+                </div>
               </div>
             </div>
           </div>
