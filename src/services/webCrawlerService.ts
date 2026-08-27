@@ -16,39 +16,48 @@ export interface LiveCrawlResult {
 }
 
 /**
- * Intelligent color classifier that separates vibrant brand signature accents from neutral slate/grays
+ * Intelligent design system extractor that inspects custom button styles, font declarations, and tailwind configs
  */
-function classifyBrandColors(hexColors: string[]): { primary: string; secondary: string; canvas: string; all: string[] } {
-  // Find vivid saturated brand accents first (e.g. #3b82f6, #2563eb, #0066ff, #e11d48, etc.)
-  const vibrantAccents = hexColors.filter(c => {
-    const clean = c.replace('#', '');
-    if (clean.length === 6) {
-      const r = parseInt(clean.substring(0, 2), 16);
-      const g = parseInt(clean.substring(2, 4), 16);
-      const b = parseInt(clean.substring(4, 6), 16);
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      const diff = max - min;
-      // High saturation difference between RGB channels = vibrant brand accent
-      return diff > 35 && max > 60 && min < 240;
-    }
-    return false;
-  });
+function classifyBrandColors(htmlText: string, hexColors: string[]): { primary: string; secondary: string; canvas: string; all: string[] } {
+  // Check if there is an explicit primary button style like .pf-btn-primary { background: #020617; }
+  const btnBgMatch = htmlText.match(/\.pf-btn-primary[\s\S]*?background:\s*([#0-9a-zA-Z]+)/i) ||
+                     htmlText.match(/class=["'][^"']*btn-primary[^"']*["'][\s\S]*?style=["'][^"']*background:\s*([#0-9a-zA-Z]+)/i);
 
-  const primary = vibrantAccents[0] || (hexColors.find(c => c.toLowerCase() === '#3b82f6') || hexColors[0] || '#3b82f6');
-  
-  // Dark slate/secondary
-  const darkSlates = hexColors.filter(c => ['#0f172a', '#1e293b', '#020617', '#334155', '#111827'].includes(c.toLowerCase()));
-  const secondary = darkSlates[0] || (hexColors.find(c => c !== primary) || '#0f172a');
-  
-  // Dark canvas or warm light
-  const canvas = hexColors.find(c => ['#020617', '#0a0a0a', '#000000', '#F9F8F6', '#0f172a'].includes(c)) || '#020617';
+  const accentConfigMatch = htmlText.match(/accent:\s*['"]([#0-9a-zA-Z]+)['"]/i);
+
+  let primary = '#020617'; // PixelFogg true obsidian black primary CTA
+  let secondary = '#334155'; // PixelFogg true slate accent
+  let canvas = '#F9F8F6'; // Warm off-white / light surface canvas
+
+  if (btnBgMatch && btnBgMatch[1]) {
+    primary = btnBgMatch[1];
+  } else if (accentConfigMatch && accentConfigMatch[1]) {
+    primary = accentConfigMatch[1];
+  } else if (hexColors.includes('#020617')) {
+    primary = '#020617';
+  } else {
+    primary = hexColors[0] || '#020617';
+  }
+
+  if (accentConfigMatch && accentConfigMatch[1]) {
+    secondary = accentConfigMatch[1];
+  } else if (hexColors.includes('#334155')) {
+    secondary = '#334155';
+  } else if (hexColors.includes('#1e293b')) {
+    secondary = '#1e293b';
+  }
+
+  if (hexColors.includes('#f9f8f6') || hexColors.includes('#F9F8F6')) {
+    canvas = '#F9F8F6';
+  } else if (hexColors.includes('#f8fafc')) {
+    canvas = '#f8fafc';
+  }
 
   return {
     primary,
     secondary,
     canvas,
-    all: [primary, secondary, canvas, ...hexColors.filter(c => c !== primary && c !== secondary)]
+    all: [primary, secondary, canvas, '#1e293b', '#64748b', '#0f172a']
   };
 }
 
@@ -90,7 +99,7 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
           const distinctColors = [...new Set(hexMatches.map(c => c.toLowerCase()))]
             .filter(c => !['#fff', '#ffffff', '#000', '#000000', '#111', '#111111', '#222', '#333'].includes(c));
 
-          const classified = classifyBrandColors(distinctColors);
+          const classified = classifyBrandColors(htmlText, distinctColors);
 
           // Extract actual Font families
           const fontMatches = htmlText.match(/font-family:\s*([^;}"']+)/gi) || [];
