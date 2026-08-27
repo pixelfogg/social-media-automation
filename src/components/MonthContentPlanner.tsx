@@ -326,7 +326,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             className="bg-[#141416] border border-[#26262a] hover:border-[#3f3f46] rounded-2xl overflow-hidden transition-all duration-200 flex flex-col justify-between group shadow-sm"
           >
             <div>
-              {/* Image Preview */}
+              {/* Visual Asset Container */}
               <div className="relative aspect-video bg-[#0a0a0a] overflow-hidden border-b border-[#26262a]">
                 <PostGraphicCard
                   post={post}
@@ -337,17 +337,12 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                 
                 {/* Generation Loading Overlay */}
                 {generatingImagePostId === post.id && (
-                  <div className="absolute inset-0 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-20">
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-20">
                     <Sparkles className="w-6 h-6 text-[#00d4a4] animate-spin" />
                     <span className="text-[11px] font-bold text-white">Synthesizing with Gemini...</span>
                   </div>
                 )}
                 
-                {/* Day Badge */}
-                <div className="absolute top-2.5 left-2.5 bg-[#0a0a0a]/90 border border-[#26262a] text-white font-mono-code font-bold text-[10px] px-2.5 py-0.5 rounded-full shadow z-10">
-                  DAY {post.dayNumber}
-                </div>
-
                 {/* Status Badge */}
                 <div className="absolute top-2.5 right-2.5 z-10">
                   <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
@@ -360,30 +355,26 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     {post.status}
                   </span>
                 </div>
-
-                {/* Platform Overlay */}
-                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white bg-[#0a0a0a]/90 px-2.5 py-1 rounded-lg border border-[#26262a]">
-                  <span className="flex items-center gap-1 font-mono-code text-neutral-300">
-                    <Clock className="w-3 h-3 text-[#00d4a4]" />
-                    {post.scheduledTime}
-                  </span>
-                  <div className="flex items-center space-x-1.5">
-                    {post.platforms.map((pl, pIdx) => (
-                      <span key={pIdx} title={pl}>
-                        {getSocialIcon(pl, "w-3 h-3 text-neutral-300")}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* Body */}
               <div className="p-4 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#0a0a0a] text-neutral-300 border border-[#26262a]">
-                    {post.category}
-                  </span>
-                  <span className="text-[10px] text-neutral-500 font-mono-code">{post.scheduledDate}</span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="flex items-center gap-1 text-[10px] text-neutral-400 font-mono-code bg-[#0a0a0a] px-2 py-0.5 rounded border border-[#26262a]">
+                      <Clock className="w-3 h-3 text-[#00d4a4]" />
+                      {post.scheduledTime}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 font-mono-code">{post.scheduledDate}</span>
+                  </div>
+
+                  <div className="flex items-center space-x-1">
+                    {post.platforms.map((pl, pIdx) => (
+                      <span key={pIdx} title={pl} className="text-neutral-400">
+                        {getSocialIcon(pl, "w-3.5 h-3.5")}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 <h3 className="text-sm font-bold text-white group-hover:text-[#00d4a4] transition-colors line-clamp-1">
