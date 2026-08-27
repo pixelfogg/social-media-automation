@@ -121,18 +121,14 @@ export const BrandGuidePage: React.FC<BrandGuidePageProps> = ({ client, onUpdate
             )}
           </button>
 
-          {/* Regenerate Button */}
+          {/* Regenerate Button - styled identically to Connect Accounts button for unified UI consistency */}
           <button
             onClick={handleRegenerate}
             disabled={isRegenerating}
-            className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 disabled:opacity-50 shadow-md cursor-pointer hover:opacity-90 active:scale-98"
-            style={{ 
-              backgroundColor: primaryColor.toLowerCase().startsWith('#f') || primaryColor.toLowerCase().startsWith('#e') ? '#3b82f6' : primaryColor,
-              color: '#ffffff'
-            }}
+            className="btn-mint flex items-center space-x-1.5 px-4 py-2 text-xs font-bold shadow-sm disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-white ${isRegenerating ? 'animate-spin' : ''}`} />
-            <span className="text-white font-bold">{isRegenerating ? 'Re-crawling...' : 'Re-crawl Website'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-[#0a0a0a] ${isRegenerating ? 'animate-spin' : ''}`} />
+            <span>{isRegenerating ? 'Re-crawling...' : 'Re-crawl Website'}</span>
           </button>
         </div>
       </div>
