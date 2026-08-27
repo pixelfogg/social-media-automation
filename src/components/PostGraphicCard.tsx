@@ -55,17 +55,13 @@ export const PostGraphicCard: React.FC<PostGraphicCardProps> = ({
       {/* Dark Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/90 via-[#0a0a0a]/30 to-transparent pointer-events-none" />
 
-      {/* Top Left: Category Badge */}
+      {/* Top Left: Category Badge - Solid dark glass frosted backdrop with high contrast white text */}
       <div className="absolute top-2.5 left-2.5 z-10">
         <span
-          className="px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider font-mono-code shadow-md backdrop-blur-md"
-          style={{
-            backgroundColor: `${primaryColor}25`,
-            color: primaryColor,
-            border: `1px solid ${primaryColor}50`
-          }}
+          className="px-2.5 py-1 text-[10px] font-extrabold rounded-full uppercase tracking-wider font-mono-code shadow-lg backdrop-blur-md bg-black/80 text-white border border-white/20 flex items-center gap-1.5"
         >
-          {post.category}
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00d4a4]" />
+          <span>{post.category}</span>
         </span>
       </div>
 
