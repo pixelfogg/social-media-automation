@@ -1,4 +1,4 @@
-// Gemini AI Service — Direct Google Gemini 2.5/1.5 AI Pipeline
+// Gemini AI Service — Direct Google Gemini 2.5/3.7/Gemma AI Pipeline
 // Uses the provided API key to crawl real websites, extract authentic brand design guidelines,
 // discover real subpages & CTA target links, and generate 30 custom social media posts.
 
@@ -10,7 +10,7 @@ export function getGeminiApiKey(): string {
 }
 
 /**
- * Call Gemini AI model with prompt and temperature
+ * Call Gemini AI model with prompt and automatic fast-fallback across active endpoints
  */
 async function callGeminiApi(prompt: string): Promise<string> {
   const apiKey = getGeminiApiKey();
@@ -18,14 +18,13 @@ async function callGeminiApi(prompt: string): Promise<string> {
     throw new Error('Gemini API key is not configured in .env');
   }
 
-  // Model fallback candidate list
+  // Active verified models in priority order
   const candidateModels = [
     'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro',
-    'gemini-pro'
+    'gemini-3.5-flash-lite',
+    'gemma-4-31b-it',
+    'gemini-3.7-flash',
+    'gemma-4-26b-a4b-it'
   ];
 
   let lastError: any = null;
@@ -96,21 +95,21 @@ Website URL: ${client.websiteUrl} (Domain: ${cleanDomain})
 Industry: ${client.industry}
 Brand Tone: ${client.tone}
 Target Audience: ${client.targetAudience}
-Initial Description / Scraped Meta: "${liveTitle} — ${liveDescription}"
+Scraped Metadata / Website Headline: "${liveTitle} — ${liveDescription}"
 
 Return a valid JSON object strictly matching this schema with NO markdown code fences around it:
 {
   "crawledPages": [
-    { "title": "${client.name} — Home & Platform", "url": "${client.websiteUrl}", "summary": "Core value proposition and landing CTA", "keywords": ["innovation", "platform"] },
-    { "title": "${client.name} — Features & Solutions", "url": "${client.websiteUrl.replace(/\/$/, '')}/features", "summary": "Full product capabilities and tooling", "keywords": ["tools", "efficiency"] },
+    { "title": "${client.name} — Home & Platform", "url": "${client.websiteUrl}", "summary": "Core value proposition and landing CTA for ${client.name}", "keywords": ["innovation", "platform"] },
+    { "title": "${client.name} — Features & Solutions", "url": "${client.websiteUrl.replace(/\/$/, '')}/features", "summary": "Full product capabilities and tooling for ${client.name}", "keywords": ["tools", "efficiency"] },
     { "title": "${client.name} — Case Studies & Proof", "url": "${client.websiteUrl.replace(/\/$/, '')}/case-studies", "summary": "Measurable customer ROI and testimonials", "keywords": ["proof", "roi"] },
     { "title": "${client.name} — Resources & Insights", "url": "${client.websiteUrl.replace(/\/$/, '')}/blog", "summary": "Thought leadership and technical guides", "keywords": ["trends", "guides"] }
   ],
   "extractedTone": "${client.tone}",
   "visualMood": "Developer-grade minimalism with pitch dark surfaces (#0a0a0a), sharp hairline borders, and vivid accent CTAs.",
   "contentPillars": ["Product Capabilities", "Industry Insights", "Customer Outcomes", "Engineering Excellence"],
-  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.industry.replace(/\s+/g, '')}", "#Automation", "#Growth", "#Innovation", "#Marketing"],
-  "targetAudiencePersona": "${client.targetAudience}",
+  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#Automation", "#Growth", "#Innovation"],
+  "targetAudiencePersona": "${client.targetAudience || 'Modern decision-makers and teams'}",
   "brandHealthScore": 96,
   "designMd": "Complete Markdown Brand Guide following Zapier DESIGN.md sample format with Overview, Key Characteristics, Colors tokens {colors.primary}, Typography Hierarchy table, Elevation & Depth, Components, and AI Image Prompting Rules."
 }`;
@@ -126,14 +125,13 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       extractedTone: parsed.extractedTone || client.tone,
       visualMood: parsed.visualMood || 'Modern high-contrast dark mode with glowing accents',
       contentPillars: parsed.contentPillars || ['Product Capabilities', 'Industry Insights', 'Customer Outcomes', 'Engineering Excellence'],
-      recommendedHashtagClusters: parsed.recommendedHashtagClusters || [`#${cleanDomain.replace(/\..*$/, '')}`, `#${client.industry.replace(/\s+/g, '')}`, '#Automation', '#Growth'],
+      recommendedHashtagClusters: parsed.recommendedHashtagClusters || [`#${cleanDomain.replace(/\..*$/, '')}`, `#${client.name.replace(/\s+/g, '')}`, `#${client.industry.replace(/\s+/g, '')}`],
       targetAudiencePersona: parsed.targetAudiencePersona || client.targetAudience,
       brandHealthScore: parsed.brandHealthScore || 96,
       designMd: parsed.designMd || generateFallbackDesignMd(client, cleanDomain)
     };
   } catch (err) {
     console.warn('Gemini API call fallback:', err);
-    // Intelligent fallback combining live scraped tags
     return {
       analyzedAt: new Date().toISOString(),
       crawledPages: initialPages,
@@ -146,9 +144,7 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
         `#${client.industry.split(' ')[0]}`,
         '#Innovation',
         '#Strategy',
-        '#Growth',
-        '#NextGen',
-        '#DigitalSolutions'
+        '#Growth'
       ],
       targetAudiencePersona: client.targetAudience || 'Modern professionals, technology leaders, and growth teams',
       brandHealthScore: 94,
