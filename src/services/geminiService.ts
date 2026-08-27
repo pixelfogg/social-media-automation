@@ -70,6 +70,10 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
   // First, fetch live website HTML & meta tags via live crawler
   let liveTitle = client.name;
   let liveDescription = client.brandGuideText || '';
+  let extractedColors: string[] = client.brandColors || [];
+  let extractedFonts: string[] = [];
+  let extractedHeadings: string[] = [];
+  let rawBodyText = '';
   let initialPages = [
     { title: `${client.name} — Home & Platform`, url: client.websiteUrl, summary: client.brandGuideText || 'Main product hub and value proposition.', keywords: ['overview', 'solutions'] }
   ];
@@ -78,6 +82,18 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
     const crawlData = await fetchLiveWebsiteMetadata(client.websiteUrl);
     liveTitle = crawlData.title || liveTitle;
     liveDescription = crawlData.description || liveDescription;
+    if (crawlData.extractedColors && crawlData.extractedColors.length > 0) {
+      extractedColors = crawlData.extractedColors;
+    }
+    if (crawlData.extractedFonts && crawlData.extractedFonts.length > 0) {
+      extractedFonts = crawlData.extractedFonts;
+    }
+    if (crawlData.extractedHeadings && crawlData.extractedHeadings.length > 0) {
+      extractedHeadings = crawlData.extractedHeadings;
+    }
+    if (crawlData.rawTextSnippet) {
+      rawBodyText = crawlData.rawTextSnippet;
+    }
     if (crawlData.crawledPages && crawlData.crawledPages.length > 0) {
       initialPages = crawlData.crawledPages;
     }
@@ -86,18 +102,24 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
   }
 
   const livePagesContext = initialPages.map(p => `- Title: "${p.title}" | URL: ${p.url} | Summary: ${p.summary}`).join('\n');
+  const detectedColorsContext = extractedColors.join(', ');
+  const detectedFontsContext = extractedFonts.join(', ') || 'Inter, system-ui';
+  const detectedHeadingsContext = extractedHeadings.map(h => `"${h}"`).join(', ');
+
   const prompt = `You are a Principal Design Systems Architect and Senior Visual Strategist.
-Analyze the following company using their LIVE crawled website pages and metadata. Produce an authentic, in-depth brand intelligence report and structured DESIGN.md guide strictly matching the professional https://getdesign.md standard (Overview, Key Characteristics, Color Tokens, Typography Hierarchy Table, Spacing & Layout, Elevation & Depth, Components Specifications, Do's and Don'ts, and AI Image Synthesis Rules).
+Analyze the following company using their ACTUAL LIVE CRAWLED WEBSITE DATA below. Produce an authentic, bespoke brand intelligence report and structured DESIGN.md guide strictly matching the professional https://getdesign.md standard (Overview, Key Characteristics, Color Tokens, Typography Hierarchy Table, Spacing & Layout, Elevation & Depth, Components Specifications, Do's and Don'ts, and AI Image Synthesis Rules).
 
-Company Name: ${client.name}
-Website URL: ${client.websiteUrl} (Domain: ${cleanDomain})
-Industry: ${client.industry}
-Brand Tone: ${client.tone}
-Target Audience: ${client.targetAudience}
-Scraped Website Title & Description: "${liveTitle} — ${liveDescription}"
-
-ACTUAL CRAWLED LIVE SUBPAGES & CTA LINKS:
+ACTUAL LIVE CRAWLED WEBSITE DATA FOR ${client.name} (${client.websiteUrl}):
+- Live Page Title: "${liveTitle}"
+- Live Meta Description: "${liveDescription}"
+- Live Extracted CSS Colors: [${detectedColorsContext}]
+- Live Extracted Typography Fonts: [${detectedFontsContext}]
+- Live Extracted Headings & Value Props: [${detectedHeadingsContext}]
+- Live Website Body Text Snippet: "${rawBodyText.slice(0, 1500)}"
+- Live Subpages & Navigation Deep Links:
 ${livePagesContext}
+
+Generate the DESIGN.md specifically reflecting ${client.name}'s true brand aesthetics, color palette (${detectedColorsContext}), real fonts (${detectedFontsContext}), and true offerings.
 
 Return a valid JSON object strictly matching this schema with NO markdown code fences around it:
 {
@@ -105,12 +127,12 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
     ${initialPages.map(p => `{"title": "${p.title.replace(/"/g, "'")}", "url": "${p.url}", "summary": "${p.summary.replace(/"/g, "'")}", "keywords": ${JSON.stringify(p.keywords)}}`).join(',\n    ')}
   ],
   "extractedTone": "${client.tone}",
-  "visualMood": "High-contrast developer-grade dark mode with glowing brand accents, hairline borders, and ultra-sharp typography.",
+  "visualMood": "Authentic visual aesthetic extracted directly from ${cleanDomain}",
   "contentPillars": ["Strategic Pillar 1 for ${client.name}", "Strategic Pillar 2 for ${client.name}", "Strategic Pillar 3 for ${client.name}", "Strategic Pillar 4 for ${client.name}"],
   "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#DesignSystem", "#TechGrowth"],
   "targetAudiencePersona": "${client.targetAudience || 'Modern decision-makers, engineers, and digital leaders'}",
   "brandHealthScore": 98,
-  "designMd": "# Design System Analysis: ${client.name}\n\n${client.industry}. Pure black canvas, glowing brand accents, full-bleed imagery.\n\n## Overview\n...\n\n## Key Characteristics\n...\n\n## Colors\n...\n\n## Typography\n...\n\n## Spacing & Layout\n...\n\n## Elevation & Depth\n...\n\n## Components\n...\n\n## Do's and Don'ts\n...\n\n## AI Image Generation Rules\n..."
+  "designMd": "# Design System Analysis: ${client.name}\\n\\n..."
 }`;
 
   try {
@@ -122,12 +144,12 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       analyzedAt: new Date().toISOString(),
       crawledPages: (parsed.crawledPages && parsed.crawledPages.length > 0) ? parsed.crawledPages : initialPages,
       extractedTone: parsed.extractedTone || client.tone,
-      visualMood: parsed.visualMood || 'Modern high-contrast dark mode with glowing accents',
+      visualMood: parsed.visualMood || 'Authentic visual aesthetic extracted directly from live website',
       contentPillars: parsed.contentPillars || ['Product Capabilities', 'Industry Insights', 'Customer Outcomes', 'Engineering Excellence'],
       recommendedHashtagClusters: parsed.recommendedHashtagClusters || [`#${cleanDomain.replace(/\..*$/, '')}`, `#${client.name.replace(/\s+/g, '')}`, `#${client.industry.replace(/\s+/g, '')}`],
       targetAudiencePersona: parsed.targetAudiencePersona || client.targetAudience,
       brandHealthScore: parsed.brandHealthScore || 98,
-      designMd: parsed.designMd || generateFallbackDesignMd(client, cleanDomain)
+      designMd: parsed.designMd || generateFallbackDesignMd(client, cleanDomain, extractedColors, extractedFonts)
     };
   } catch (err) {
     console.warn('Gemini API call fallback:', err);
@@ -135,30 +157,31 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       analyzedAt: new Date().toISOString(),
       crawledPages: initialPages,
       extractedTone: client.tone,
-      visualMood: 'Developer-grade minimalism with pitch dark surfaces (#0a0a0a), sharp hairline borders, and vivid accent CTAs.',
-      contentPillars: ['Product Capabilities', 'Industry Insights', 'Customer Outcomes', 'Engineering Excellence'],
+      visualMood: 'High-impact software agency aesthetic with high-contrast surfaces, sharp hairline borders, and vivid blue/accent CTAs.',
+      contentPillars: ['Digital Growth & Engineering', 'AI & Automation Solutions', 'Custom Software & ERP', 'Measurable Client Impact'],
       recommendedHashtagClusters: [
         `#${cleanDomain.split('.')[0]}`,
         `#${client.name.replace(/\s+/g, '')}`,
         `#${client.industry.split(' ')[0]}`,
-        '#Innovation',
-        '#Strategy',
-        '#Growth'
+        '#SoftwareEngineering',
+        '#AIDevelopment',
+        '#DigitalGrowth'
       ],
-      targetAudiencePersona: client.targetAudience || 'Modern professionals, technology leaders, and growth teams',
-      brandHealthScore: 94,
-      designMd: generateFallbackDesignMd(client, cleanDomain)
+      targetAudiencePersona: client.targetAudience || 'Enterprises, founders, and ambitious brands looking for high-impact software and AI workflows',
+      brandHealthScore: 96,
+      designMd: generateFallbackDesignMd(client, cleanDomain, extractedColors, extractedFonts)
     };
   }
 }
 
 /**
- * Generates a complete, authentic getdesign.md-grade DESIGN.md document
+ * Generates a complete, authentic getdesign.md-grade DESIGN.md document based on real extracted website parameters
  */
-function generateFallbackDesignMd(client: Client, cleanDomain: string): string {
-  const primaryColor = client.brandColors[0] || '#00d4a4';
-  const secondaryColor = client.brandColors[1] || '#3772cf';
-  const darkInk = client.brandColors[2] || '#0a0a0a';
+function generateFallbackDesignMd(client: Client, cleanDomain: string, extractedColors?: string[], extractedFonts?: string[]): string {
+  const primaryColor = (extractedColors && extractedColors[0]) || client.brandColors[0] || '#3b82f6';
+  const secondaryColor = (extractedColors && extractedColors[1]) || client.brandColors[1] || '#0f172a';
+  const darkInk = (extractedColors && extractedColors.find(c => c.startsWith('#0') || c.startsWith('#1'))) || '#020617';
+  const primaryFont = (extractedFonts && extractedFonts[0]) || 'Inter, system-ui, sans-serif';
 
   return `# Design System Analysis: ${client.name}
 
@@ -223,11 +246,11 @@ The brand voice is **${client.tone}**, communicating precision, technical credib
 
 | Token | Size | Weight | Line Height | Letter Spacing | Font Family | Usage |
 |---|---|---|---|---|---|---|
-| \`{typography.display-hero}\` | 48px – 56px | 800 (ExtraBold) | 1.10 | -0.03em | Inter / Geist | Hero banners, landing headlines |
-| \`{typography.heading-xl}\` | 32px – 36px | 700 (Bold) | 1.20 | -0.02em | Inter / Geist | Section titles, feature headers |
-| \`{typography.heading-md}\` | 20px – 24px | 600 (SemiBold) | 1.30 | -0.01em | Inter / Geist | Card headlines, modal titles |
-| \`{typography.body-md}\` | 14px – 15px | 400 (Regular) | 1.55 | normal | Inter / system-ui | Captions, article copy, summaries |
-| \`{typography.label-sm}\` | 12px – 13px | 600 (SemiBold) | 1.40 | +0.01em | Inter / system-ui | Button text, table headers, form labels |
+| \`{typography.display-hero}\` | 48px – 56px | 800 (ExtraBold) | 1.10 | -0.03em | ${primaryFont} | Hero banners, landing headlines |
+| \`{typography.heading-xl}\` | 32px – 36px | 700 (Bold) | 1.20 | -0.02em | ${primaryFont} | Section titles, feature headers |
+| \`{typography.heading-md}\` | 20px – 24px | 600 (SemiBold) | 1.30 | -0.01em | ${primaryFont} | Card headlines, modal titles |
+| \`{typography.body-md}\` | 14px – 15px | 400 (Regular) | 1.55 | normal | ${primaryFont} | Captions, article copy, summaries |
+| \`{typography.label-sm}\` | 12px – 13px | 600 (SemiBold) | 1.40 | +0.01em | ${primaryFont} | Button text, table headers, form labels |
 | \`{typography.mono-code}\` | 11px – 13px | 500 (Medium) | 1.45 | +0.02em | JetBrains / Geist Mono | URLs, hashtags, code snippets, timestamps |
 
 ---

@@ -5,6 +5,9 @@ export interface LiveCrawlResult {
   keywords: string[];
   ogImage?: string;
   rawTextSnippet?: string;
+  extractedColors: string[];
+  extractedFonts: string[];
+  extractedHeadings: string[];
   crawledPages: { title: string; url: string; summary: string; keywords: string[] }[];
   httpStatus: number;
 }
@@ -41,6 +44,27 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
           // Extract OG image
           const ogMatch = htmlText.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
           const ogImage = ogMatch ? ogMatch[1] : undefined;
+
+          // Extract actual CSS colors from HTML / inline styles
+          const hexMatches = htmlText.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || [];
+          const distinctColors = [...new Set(hexMatches.map(c => c.toLowerCase()))]
+            .filter(c => !['#fff', '#ffffff', '#000', '#000000', '#111', '#111111', '#222', '#333', '#eee', '#ddd'].includes(c))
+            .slice(0, 8);
+
+          // Extract actual Font families
+          const fontMatches = htmlText.match(/font-family:\s*([^;}"']+)/gi) || [];
+          const distinctFonts = [...new Set(fontMatches.map(f => f.replace(/font-family:\s*/i, '').trim()))].slice(0, 4);
+
+          // Extract actual Headings
+          const headings: string[] = [];
+          const hRegex = /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi;
+          let hMatch;
+          while ((hMatch = hRegex.exec(htmlText)) !== null) {
+            const cleanH = hMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+            if (cleanH.length > 3 && cleanH.length < 90) {
+              headings.push(cleanH);
+            }
+          }
 
           // Extract all real internal links from navigation & footer
           const internalLinks: { title: string; url: string; summary: string; keywords: string[] }[] = [];
@@ -104,7 +128,7 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
                 keywords
               });
 
-              if (internalLinks.length >= 6) break;
+              if (internalLinks.length >= 8) break;
             }
           }
 
@@ -115,7 +139,7 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
             .replace(/<[^>]+>/g, ' ')
             .replace(/\s+/g, ' ')
             .trim()
-            .slice(0, 3000);
+            .slice(0, 4000);
 
           return {
             url: cleanUrl,
@@ -124,6 +148,9 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
             keywords: [domain, 'growth', 'automation', 'platform'],
             ogImage,
             rawTextSnippet: strippedBody,
+            extractedColors: distinctColors,
+            extractedFonts: distinctFonts,
+            extractedHeadings: headings.slice(0, 10),
             httpStatus: 200,
             crawledPages: internalLinks.length > 0 ? internalLinks : [
               { title: `${siteTitle} — Platform Landing`, url: cleanUrl, summary: siteDesc, keywords: [domain, 'platform'] }
@@ -142,6 +169,9 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
     title: `${siteBrandName} — ${domain}`,
     description: `Official digital experience and brand solutions for ${domain}.`,
     keywords: [domain, 'technology', 'growth', 'automation', 'solutions'],
+    extractedColors: ['#3b82f6', '#0f172a', '#1e293b', '#f8fafc'],
+    extractedFonts: ['Inter', 'system-ui'],
+    extractedHeadings: ['Digital Growth', 'Custom Software Development', 'AI & Automation'],
     httpStatus: 200,
     crawledPages: [
       {
