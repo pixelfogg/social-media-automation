@@ -3,11 +3,9 @@ import type { Client, BrandAnalysis } from '../types';
 import { getSocialIcon } from './SocialIcons';
 import { 
   Globe, 
-  FileCode, 
   ExternalLink, 
   Key, 
   Sparkles,
-  Check,
   Share2,
   Plus,
   ShieldCheck,
@@ -15,11 +13,8 @@ import {
   Palette,
   CheckCircle2,
   Target,
-  Hash,
-  Copy,
-  Eye
+  Hash
 } from 'lucide-react';
-import { DesignMdVisualPreview } from './DesignMdVisualPreview';
 import { analyzeBrandAndWebsite } from '../services/aiGenerator';
 import { analyzeWebsiteWithGemini } from '../services/geminiService';
 
@@ -27,19 +22,15 @@ interface BrandAnalyzerProps {
   client: Client;
   onUpdateClient: (updatedClient: Client) => void;
   onOpenConnectSocialModal: () => void;
-  initialTab?: 'overview' | 'brand_guide_md' | 'visual_preview';
 }
 
 export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({ 
   client, 
   onUpdateClient,
-  onOpenConnectSocialModal,
-  initialTab = 'overview'
+  onOpenConnectSocialModal
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressMessage, setProgressMessage] = useState('');
-  const [activeViewTab, setActiveViewTab] = useState<'overview' | 'brand_guide_md' | 'visual_preview'>(initialTab);
-  const [copiedMd, setCopiedMd] = useState(false);
 
   const analysis: BrandAnalysis = client.brandAnalysis || analyzeBrandAndWebsite(client);
   const clientSocialAccounts = client.socialAccounts || [];
@@ -72,12 +63,6 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
       setIsAnalyzing(false);
       setProgressMessage('');
     }
-  };
-
-  const handleCopyDesignMd = () => {
-    navigator.clipboard.writeText(analysis.designMd || '');
-    setCopiedMd(true);
-    setTimeout(() => setCopiedMd(false), 2500);
   };
 
   return (
@@ -132,49 +117,8 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
         </div>
       )}
 
-      {/* VIEW SELECTOR TABS */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#26262a] pb-3">
-        <button
-          onClick={() => setActiveViewTab('overview')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 ${
-            activeViewTab === 'overview'
-              ? 'bg-[#00d4a4] text-[#0a0a0a]'
-              : 'bg-[#141416] text-neutral-400 hover:text-white border border-[#26262a]'
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>Website Index & Accounts</span>
-        </button>
-
-        <button
-          onClick={() => setActiveViewTab('visual_preview')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 ${
-            activeViewTab === 'visual_preview'
-              ? 'bg-[#00d4a4] text-[#0a0a0a]'
-              : 'bg-[#141416] text-neutral-400 hover:text-white border border-[#26262a]'
-          }`}
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Interactive Visual Preview (getdesign.md UI)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveViewTab('brand_guide_md')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 ${
-            activeViewTab === 'brand_guide_md'
-              ? 'bg-[#00d4a4] text-[#0a0a0a]'
-              : 'bg-[#141416] text-neutral-400 hover:text-white border border-[#26262a]'
-          }`}
-        >
-          <FileCode className="w-3.5 h-3.5" />
-          <span>Raw Markdown (DESIGN.md)</span>
-        </button>
-      </div>
-
-      {activeViewTab === 'overview' ? (
-        <>
-          {/* DEDICATED PER-CLIENT SOCIAL MEDIA PROFILE SECTION */}
-          <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 space-y-4">
+      {/* DEDICATED PER-CLIENT SOCIAL MEDIA PROFILE SECTION */}
+      <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -380,47 +324,6 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
             </div>
 
           </div>
-        </>
-      ) : activeViewTab === 'visual_preview' ? (
-        /* INTERACTIVE VISUAL DESIGN SYSTEM PREVIEW */
-        <DesignMdVisualPreview client={client} analysis={analysis} />
-      ) : (
-        /* GENERATED MARKDOWN BRAND GUIDE VIEW */
-        <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 space-y-4 animate-fadeIn">
-          <div className="flex items-center justify-between border-b border-[#26262a] pb-4">
-            <div className="flex items-center space-x-2.5">
-              <FileCode className="w-5 h-5 text-[#00d4a4]" />
-              <div>
-                <h3 className="text-base font-bold text-white">{client.name} — Auto-Generated DESIGN.md Brand Guide</h3>
-                <p className="text-xs text-neutral-400">Extracted website visual tokens, color palettes, and Midjourney image prompt rules</p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleCopyDesignMd}
-              className="btn-mint flex items-center space-x-1.5 px-4 py-2 text-xs font-bold shadow-sm"
-            >
-              {copiedMd ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[#0a0a0a]" />
-                  <span>Copied Brand Guide!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[#0a0a0a]" />
-                  <span>Copy Markdown DESIGN.md</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-5 overflow-x-auto">
-            <pre className="text-xs text-neutral-200 font-mono-code leading-relaxed whitespace-pre-wrap">
-              {analysis.designMd}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

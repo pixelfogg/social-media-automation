@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Client, SocialPost } from '../types';
 import { BrandAnalyzer } from './BrandAnalyzer';
+import { BrandGuidePage } from './BrandGuidePage';
 import { MonthContentPlanner } from './MonthContentPlanner';
 import { ImagePromptStudio } from './ImagePromptStudio';
 import { PublisherQueue } from './PublisherQueue';
@@ -191,13 +192,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
       {/* DASHBOARD TAB CONTENTS */}
       <div className="pt-2">
-        {/* Tab 1 & 2: Overview & DESIGN.md Brand Guide */}
-        {(activeTab === 'overview' || activeTab === 'brand_guide_md') && (
+        {/* Tab 1: Overview & Accounts */}
+        {activeTab === 'overview' && (
           <BrandAnalyzer
             client={client}
             onUpdateClient={onUpdateClient}
             onOpenConnectSocialModal={onOpenConnectSocialModal}
-            initialTab={activeTab === 'brand_guide_md' ? 'brand_guide_md' : 'overview'}
+          />
+        )}
+
+        {/* Tab 2: Dedicated Brand Guide (DESIGN.md) & Visual Showcase */}
+        {activeTab === 'brand_guide_md' && (
+          <BrandGuidePage
+            client={client}
+            onUpdateClient={onUpdateClient}
           />
         )}
 
