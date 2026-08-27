@@ -33,21 +33,24 @@ export const DesignMdVisualPreview: React.FC<DesignMdVisualPreviewProps> = ({ cl
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
-  // Curated color swatches based on extracted colors and getdesign.md standard
+  // Curated color swatches based strictly on extracted live website colors
+  const accentHighlight = client.brandColors[2] || `${primaryColor}cc`;
+  const brandTint = `${primaryColor}18`;
+
   const brandSwatches = [
     { name: 'Brand Primary', role: 'Primary CTA & conversion signature', token: '{colors.primary}', hex: primaryColor },
-    { name: 'Brand Secondary', role: 'Secondary elements & deep slate tone', token: '{colors.secondary}', hex: secondaryColor },
-    { name: 'Accent Highlight', role: 'Badges, metrics, focus rings', token: '{colors.accent}', hex: '#00d4a4' },
-    { name: 'Brand Tint', role: 'Subtle container washes & soft fills', token: '{colors.tint}', hex: `${primaryColor}20` }
+    { name: 'Brand Secondary', role: 'Secondary structural & text tone', token: '{colors.secondary}', hex: secondaryColor },
+    { name: 'Brand Accent', role: 'Badges, metrics, focus rings', token: '{colors.accent}', hex: accentHighlight },
+    { name: 'Brand Wash / Tint', role: 'Subtle container washes & soft fills', token: '{colors.tint}', hex: brandTint }
   ];
 
   const surfaceSwatches = [
-    { name: 'Canvas Dark', role: 'Pure background surface', token: '{colors.canvas-dark}', hex: '#0a0a0a' },
-    { name: 'Surface Card', role: 'Elevated modular containers', token: '{colors.surface-card}', hex: '#141416' },
+    { name: 'Canvas Dark', role: 'Pure background surface', token: '{colors.canvas-dark}', hex: client.brandColors[3] || '#020617' },
+    { name: 'Surface Card', role: 'Elevated modular containers', token: '{colors.surface-card}', hex: '#0f172a' },
     { name: 'Surface Light', role: 'Light mode canvas', token: '{colors.canvas-light}', hex: '#F9F8F6' },
     { name: 'Surface Gray', role: 'Neutral boundary fills', token: '{colors.surface-neutral}', hex: '#f1f5f9' },
-    { name: 'Border Subtle', role: 'Hairline structural dividers', token: '{colors.border-subtle}', hex: '#26262a' },
-    { name: 'Border Strong', role: 'Hover perimeters & focus state', token: '{colors.border-strong}', hex: '#3f3f46' }
+    { name: 'Border Subtle', role: 'Hairline structural dividers', token: '{colors.border-subtle}', hex: '#1e293b' },
+    { name: 'Border Strong', role: 'Hover perimeters & focus state', token: '{colors.border-strong}', hex: '#334155' }
   ];
 
   const typographyScales = [
@@ -149,7 +152,7 @@ export const DesignMdVisualPreview: React.FC<DesignMdVisualPreviewProps> = ({ cl
         <div className="border-b pb-4 flex items-center justify-between" style={{ borderColor: isLight ? '#e5e7eb' : '#26262a' }}>
           <div>
             <h3 className={`text-lg font-extrabold flex items-center gap-2 ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-              <Palette className="w-5 h-5 text-[#00d4a4]" />
+              <Palette className="w-5 h-5" style={{ color: primaryColor }} />
               <span>Color Palette & Tokens</span>
             </h3>
             <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>Click any color card to copy token or hex code</p>
@@ -170,9 +173,9 @@ export const DesignMdVisualPreview: React.FC<DesignMdVisualPreviewProps> = ({ cl
                   isLight ? 'border-neutral-200 bg-white hover:border-neutral-400' : 'border-[#26262a] bg-[#0a0a0a] hover:border-[#3f3f46]'
                 }`}
               >
-                <div className="h-24 w-full relative flex items-center justify-center" style={{ backgroundColor: swatch.hex }}>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1">
-                    {copiedToken === swatch.token ? <Check className="w-3 h-3 text-[#00d4a4]" /> : <Copy className="w-3 h-3" />}
+                <div className="h-24 w-full relative flex items-center justify-center border-b border-black/10" style={{ backgroundColor: swatch.hex }}>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-xs text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center space-x-1">
+                    {copiedToken === swatch.token ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedToken === swatch.token ? 'Copied Token!' : 'Copy Token'}</span>
                   </div>
                 </div>
@@ -182,7 +185,7 @@ export const DesignMdVisualPreview: React.FC<DesignMdVisualPreviewProps> = ({ cl
                     <span className={`text-[10px] font-mono-code font-bold ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>{swatch.hex}</span>
                   </div>
                   <p className={`text-[10px] truncate ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}>{swatch.role}</p>
-                  <p className="text-[10px] text-[#00d4a4] font-mono-code font-semibold">{swatch.token}</p>
+                  <p className="text-[10px] font-mono-code font-semibold" style={{ color: primaryColor }}>{swatch.token}</p>
                 </div>
               </div>
             ))}

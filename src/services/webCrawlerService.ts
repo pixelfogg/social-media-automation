@@ -6,10 +6,50 @@ export interface LiveCrawlResult {
   ogImage?: string;
   rawTextSnippet?: string;
   extractedColors: string[];
+  primaryAccent: string;
+  secondaryAccent: string;
+  canvasColor: string;
   extractedFonts: string[];
   extractedHeadings: string[];
   crawledPages: { title: string; url: string; summary: string; keywords: string[] }[];
   httpStatus: number;
+}
+
+/**
+ * Intelligent color classifier that separates vibrant brand signature accents from neutral slate/grays
+ */
+function classifyBrandColors(hexColors: string[]): { primary: string; secondary: string; canvas: string; all: string[] } {
+  // Find vivid saturated brand accents first (e.g. #3b82f6, #2563eb, #0066ff, #e11d48, etc.)
+  const vibrantAccents = hexColors.filter(c => {
+    const clean = c.replace('#', '');
+    if (clean.length === 6) {
+      const r = parseInt(clean.substring(0, 2), 16);
+      const g = parseInt(clean.substring(2, 4), 16);
+      const b = parseInt(clean.substring(4, 6), 16);
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const diff = max - min;
+      // High saturation difference between RGB channels = vibrant brand accent
+      return diff > 35 && max > 60 && min < 240;
+    }
+    return false;
+  });
+
+  const primary = vibrantAccents[0] || (hexColors.find(c => c.toLowerCase() === '#3b82f6') || hexColors[0] || '#3b82f6');
+  
+  // Dark slate/secondary
+  const darkSlates = hexColors.filter(c => ['#0f172a', '#1e293b', '#020617', '#334155', '#111827'].includes(c.toLowerCase()));
+  const secondary = darkSlates[0] || (hexColors.find(c => c !== primary) || '#0f172a');
+  
+  // Dark canvas or warm light
+  const canvas = hexColors.find(c => ['#020617', '#0a0a0a', '#000000', '#F9F8F6', '#0f172a'].includes(c)) || '#020617';
+
+  return {
+    primary,
+    secondary,
+    canvas,
+    all: [primary, secondary, canvas, ...hexColors.filter(c => c !== primary && c !== secondary)]
+  };
 }
 
 export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveCrawlResult> {
@@ -48,8 +88,9 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
           // Extract actual CSS colors from HTML / inline styles
           const hexMatches = htmlText.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || [];
           const distinctColors = [...new Set(hexMatches.map(c => c.toLowerCase()))]
-            .filter(c => !['#fff', '#ffffff', '#000', '#000000', '#111', '#111111', '#222', '#333', '#eee', '#ddd'].includes(c))
-            .slice(0, 8);
+            .filter(c => !['#fff', '#ffffff', '#000', '#000000', '#111', '#111111', '#222', '#333'].includes(c));
+
+          const classified = classifyBrandColors(distinctColors);
 
           // Extract actual Font families
           const fontMatches = htmlText.match(/font-family:\s*([^;}"']+)/gi) || [];
@@ -148,8 +189,11 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
             keywords: [domain, 'growth', 'automation', 'platform'],
             ogImage,
             rawTextSnippet: strippedBody,
-            extractedColors: distinctColors,
-            extractedFonts: distinctFonts,
+            extractedColors: classified.all,
+            primaryAccent: classified.primary,
+            secondaryAccent: classified.secondary,
+            canvasColor: classified.canvas,
+            extractedFonts: distinctFonts.length > 0 ? distinctFonts : ['Inter', 'system-ui'],
             extractedHeadings: headings.slice(0, 10),
             httpStatus: 200,
             crawledPages: internalLinks.length > 0 ? internalLinks : [
@@ -169,7 +213,10 @@ export async function fetchLiveWebsiteMetadata(targetUrl: string): Promise<LiveC
     title: `${siteBrandName} — ${domain}`,
     description: `Official digital experience and brand solutions for ${domain}.`,
     keywords: [domain, 'technology', 'growth', 'automation', 'solutions'],
-    extractedColors: ['#3b82f6', '#0f172a', '#1e293b', '#f8fafc'],
+    extractedColors: ['#3b82f6', '#0f172a', '#1e293b', '#F9F8F6'],
+    primaryAccent: '#3b82f6',
+    secondaryAccent: '#0f172a',
+    canvasColor: '#020617',
     extractedFonts: ['Inter', 'system-ui'],
     extractedHeadings: ['Digital Growth', 'Custom Software Development', 'AI & Automation'],
     httpStatus: 200,
