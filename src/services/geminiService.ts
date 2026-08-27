@@ -86,9 +86,8 @@ export async function analyzeWebsiteWithGemini(client: Client): Promise<BrandAna
   }
 
   const livePagesContext = initialPages.map(p => `- Title: "${p.title}" | URL: ${p.url} | Summary: ${p.summary}`).join('\n');
-
-  const prompt = `You are a world-class CMO, Senior Brand Designer, and Visual Strategist.
-Analyze the following company using their LIVE crawled website pages and metadata. Produce an authentic, in-depth brand intelligence report and structured DESIGN.md guide in JSON format.
+  const prompt = `You are a Principal Design Systems Architect and Senior Visual Strategist.
+Analyze the following company using their LIVE crawled website pages and metadata. Produce an authentic, in-depth brand intelligence report and structured DESIGN.md guide strictly matching the professional https://getdesign.md standard (Overview, Key Characteristics, Color Tokens, Typography Hierarchy Table, Spacing & Layout, Elevation & Depth, Components Specifications, Do's and Don'ts, and AI Image Synthesis Rules).
 
 Company Name: ${client.name}
 Website URL: ${client.websiteUrl} (Domain: ${cleanDomain})
@@ -106,12 +105,12 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
     ${initialPages.map(p => `{"title": "${p.title.replace(/"/g, "'")}", "url": "${p.url}", "summary": "${p.summary.replace(/"/g, "'")}", "keywords": ${JSON.stringify(p.keywords)}}`).join(',\n    ')}
   ],
   "extractedTone": "${client.tone}",
-  "visualMood": "Developer-grade minimalism with pitch dark surfaces (#0a0a0a), sharp hairline borders, and vivid accent CTAs.",
-  "contentPillars": ["Specific Pillar 1 for ${client.name}", "Specific Pillar 2 for ${client.name}", "Specific Pillar 3 for ${client.name}", "Specific Pillar 4 for ${client.name}"],
-  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#CustomTag1", "#CustomTag2"],
-  "targetAudiencePersona": "${client.targetAudience || 'Modern decision-makers and teams'}",
+  "visualMood": "High-contrast developer-grade dark mode with glowing brand accents, hairline borders, and ultra-sharp typography.",
+  "contentPillars": ["Strategic Pillar 1 for ${client.name}", "Strategic Pillar 2 for ${client.name}", "Strategic Pillar 3 for ${client.name}", "Strategic Pillar 4 for ${client.name}"],
+  "recommendedHashtagClusters": ["#${cleanDomain.replace(/\..*$/, '')}", "#${client.name.replace(/\s+/g, '')}", "#${client.industry.replace(/\s+/g, '')}", "#DesignSystem", "#TechGrowth"],
+  "targetAudiencePersona": "${client.targetAudience || 'Modern decision-makers, engineers, and digital leaders'}",
   "brandHealthScore": 98,
-  "designMd": "Complete Markdown Brand Guide following Zapier DESIGN.md sample format with Overview, Key Characteristics, Colors tokens {colors.primary}, Typography Hierarchy table, Elevation & Depth, Components, and AI Image Prompting Rules."
+  "designMd": "# Design System Analysis: ${client.name}\n\n${client.industry}. Pure black canvas, glowing brand accents, full-bleed imagery.\n\n## Overview\n...\n\n## Key Characteristics\n...\n\n## Colors\n...\n\n## Typography\n...\n\n## Spacing & Layout\n...\n\n## Elevation & Depth\n...\n\n## Components\n...\n\n## Do's and Don'ts\n...\n\n## AI Image Generation Rules\n..."
 }`;
 
   try {
@@ -151,6 +150,160 @@ Return a valid JSON object strictly matching this schema with NO markdown code f
       designMd: generateFallbackDesignMd(client, cleanDomain)
     };
   }
+}
+
+/**
+ * Generates a complete, authentic getdesign.md-grade DESIGN.md document
+ */
+function generateFallbackDesignMd(client: Client, cleanDomain: string): string {
+  const primaryColor = client.brandColors[0] || '#00d4a4';
+  const secondaryColor = client.brandColors[1] || '#3772cf';
+  const darkInk = client.brandColors[2] || '#0a0a0a';
+
+  return `# Design System Analysis: ${client.name}
+
+${client.industry}. Pure black canvas, ${primaryColor} primary accents, high-contrast typography, and engineering-grade minimalism.
+
+---
+
+## Overview
+
+${client.name} (${cleanDomain}) centers a near-pure black canvas with high-contrast display headlines and uses **${primaryColor}** as a signature conversion and brand identity accent. It is designed for high-performance marketing, product showcase experiences, and developer-grade dark-mode interfaces.
+
+The brand voice is **${client.tone}**, communicating precision, technical credibility, and clarity to its core audience of **${client.targetAudience}**.
+
+---
+
+## Key Characteristics
+
+- **Canvas Background**: \`{colors.canvas}\` (\`${darkInk}\`) — Deep, pitch-black surface providing dramatic contrast.
+- **Primary Accent Signature**: \`{colors.primary}\` (\`${primaryColor}\`) — Saturated neon/mint accent reserved for critical CTAs, badges, and active state highlights.
+- **Secondary Supporting Hue**: \`{colors.secondary}\` (\`${secondaryColor}\`) — Complementary tone for data metrics, charts, and linear gradients.
+- **Hairline Borders**: 1px subtle strokes (\`#26262a\` to \`#3f3f46\`) creating precise structural definition.
+- **Elevation System**: Flat dark layers with subtle glow reflections rather than heavy drop shadows.
+- **Micro-Interactions**: Instantaneous 150ms ease-out transitions for hover scales, pill switches, and focus states.
+
+---
+
+## Colors
+
+### Brand & Accent
+| Token | Hex Value | Role / Usage |
+|---|---|---|
+| \`{colors.primary}\` | \`${primaryColor}\` | Primary conversion CTAs, active indicators, focus rings, brand badges |
+| \`{colors.secondary}\` | \`${secondaryColor}\` | Secondary data points, gradient transitions, secondary tags |
+| \`{colors.accent-glow}\` | \`${primaryColor}25\` | Soft volumetric glow beneath active containers and modal highlights |
+
+### Surface & Backgrounds
+| Token | Hex Value | Role / Usage |
+|---|---|---|
+| \`{colors.canvas}\` | \`${darkInk}\` | Global page backdrop (pure pitch black) |
+| \`{colors.surface-card}\` | \`#141416\` | Primary card containers, sidebar panels, input fields |
+| \`{colors.surface-hover}\` | \`#1c1c1f\` | Hover state for interactive cards and list items |
+| \`{colors.surface-overlay}\` | \`#000000cc\` | Modal veils and backdrop blur underlays |
+
+### Borders & Dividers
+| Token | Hex Value | Role / Usage |
+|---|---|---|
+| \`{colors.border-subtle}\` | \`#26262a\` | Standard container perimeter and grid lines |
+| \`{colors.border-strong}\` | \`#3f3f46\` | Card hover states and active focus borders |
+| \`{colors.border-brand}\` | \`${primaryColor}50\` | Highlighted containers and featured campaign cards |
+
+### Text & Ink Hierarchy
+| Token | Hex Value | Role / Usage |
+|---|---|---|
+| \`{colors.text-primary}\` | \`#ffffff\` | Primary display headlines, card titles, hero copy |
+| \`{colors.text-secondary}\` | \`#a1a1aa\` | Body text, descriptions, secondary explanations |
+| \`{colors.text-muted}\` | \`#71717a\` | Timestamps, metadata, inactive tab labels |
+| \`{colors.text-accent}\` | \`${primaryColor}\` | Link text, status values, highlighted numbers |
+
+---
+
+## Typography Hierarchy
+
+| Token | Size | Weight | Line Height | Letter Spacing | Font Family | Usage |
+|---|---|---|---|---|---|---|
+| \`{typography.display-hero}\` | 48px – 56px | 800 (ExtraBold) | 1.10 | -0.03em | Inter / Geist | Hero banners, landing headlines |
+| \`{typography.heading-xl}\` | 32px – 36px | 700 (Bold) | 1.20 | -0.02em | Inter / Geist | Section titles, feature headers |
+| \`{typography.heading-md}\` | 20px – 24px | 600 (SemiBold) | 1.30 | -0.01em | Inter / Geist | Card headlines, modal titles |
+| \`{typography.body-md}\` | 14px – 15px | 400 (Regular) | 1.55 | normal | Inter / system-ui | Captions, article copy, summaries |
+| \`{typography.label-sm}\` | 12px – 13px | 600 (SemiBold) | 1.40 | +0.01em | Inter / system-ui | Button text, table headers, form labels |
+| \`{typography.mono-code}\` | 11px – 13px | 500 (Medium) | 1.45 | +0.02em | JetBrains / Geist Mono | URLs, hashtags, code snippets, timestamps |
+
+---
+
+## Spacing & Layout Tokens
+
+- **Grid System**: 12-column responsive layout with 24px gutters.
+- **Container Max-Width**: \`max-w-7xl\` (1280px) for desktop applications.
+- **Section Padding**: \`py-12\` to \`py-20\` (48px - 80px) vertical rhythm.
+- **Card Padding**: \`p-4\` to \`p-6\` (16px - 24px) for structured modular units.
+- **Corner Radii**:
+  - \`{radius.sm}\`: 6px — Tags, badges, inner buttons
+  - \`{radius.md}\`: 12px — Standard cards, input fields, navigation pills
+  - \`{radius.lg}\`: 16px — Large modal dialogs, dashboard panels
+  - \`{radius.full}\`: 9999px — Status chips, pill buttons, category pills
+
+---
+
+## Elevation & Depth
+
+- **Base Layer (z-0)**: Deep canvas (\`${darkInk}\`).
+- **Elevated Layer (z-10)**: Surface cards (\`#141416\`) with 1px border stroke (\`#26262a\`).
+- **Floating Layer (z-30)**: Dropdowns, tooltips, and floating action bars with \`backdrop-filter: blur(12px)\`.
+- **Modal Layer (z-50)**: Fixed dialogs over \`rgba(0,0,0,0.8)\` backdrop with subtle \`${primaryColor}\` radial glow.
+
+---
+
+## Components
+
+### 1. Primary Action Button (CTA)
+- **Background**: Solid \`${primaryColor}\`
+- **Text**: \`#0a0a0a\` (ExtraBold, 13px, font-sans)
+- **Border**: None
+- **Hover**: 105% brightness, subtle 0 0 16px \`${primaryColor}40\` box glow
+- **Border Radius**: 9999px (Full pill) or 10px
+
+### 2. Secondary Dark Button
+- **Background**: \`#141416\`
+- **Text**: \`#ffffff\` (SemiBold, 13px)
+- **Border**: 1px solid \`#26262a\`
+- **Hover**: Background \`#1c1c1f\`, border \`#3f3f46\`
+
+### 3. Metric & Stat Card
+- **Background**: \`#141416\`
+- **Border**: 1px solid \`#26262a\`
+- **Number**: 28px ExtraBold \`#ffffff\`
+- **Label**: 12px text-neutral-400 font-mono
+
+---
+
+## Do's and Don'ts
+
+### ✅ Do:
+- Use \`${primaryColor}\` purposefully for primary conversion points and key status highlights.
+- Maintain high contrast between \`#ffffff\` typography and the \`${darkInk}\` surface.
+- Keep border strokes at 1px hairline thickness (\`#26262a\`).
+- Display code, URLs, and hashtags in a dedicated monospace font.
+
+### ❌ Don't:
+- Don't use light-gray backgrounds or low-contrast washed-out containers.
+- Don't apply multiple conflicting gradient styles on a single view.
+- Don't use generic rounded rectangles with harsh heavy drop shadows.
+- Don't use saturated rainbow colors outside the designated brand tokens.
+
+---
+
+## AI Image Generation Rules
+
+When generating social media graphics or campaign visuals for **${client.name}**:
+
+1. **Canvas**: Always specify \`pitch black minimalist background (${darkInk})\` with subtle dark vignette.
+2. **Lighting**: Infuse \`volumetric ${primaryColor} rim lighting\` and subtle glowing reflections.
+3. **Subject Matter**: Modern 3D isometric engineering artifacts, abstract glass shapes, and high-tech typography.
+4. **Style Parameter**: \`hyper-realistic 8k octane render, cinematic lighting, sleek finish, clean composition --ar 16:9 --v 6.0\`.
+5. **Negative Prompt**: \`flat clip-art, oversaturated rainbow colors, cartoonish characters, low-resolution noise, blurry text\`.
+`;
 }
 
 /**
@@ -264,61 +417,6 @@ Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
       imageUrl: generateSVGDataUrl(title, category, primaryColor, secondaryColor, day)
     };
   });
-}
-
-function generateFallbackDesignMd(client: Client, cleanDomain: string): string {
-  const primaryColor = client.brandColors[0] || '#00d4a4';
-  const secondaryColor = client.brandColors[1] || '#3772cf';
-  const darkInk = client.brandColors[2] || '#0a0a0a';
-
-  return `## Brand Guide — ${client.name} (${cleanDomain})
-
-## Overview
-
-${client.name} operates in the **${client.industry}** domain. The visual identity reads as modern, authoritative, and developer-grade. The brand pairs a deep dark canvas \`{colors.canvas}\` (\`${darkInk}\`) with a high-contrast ink text and a saturated primary accent \`{colors.primary}\` (\`${primaryColor}\`) for conversion targets.
-
-The tone is **${client.tone}**. Typography relies on \`Inter\` for body and UI elements, paired with clean geometric headings. Components feature \`rounded-md\` (12px) borders and crisp hairline strokes (\`#26262a\`).
-
-**Key Characteristics:**
-- **Primary Conversion Accent**: \`{colors.primary}\` (\`${primaryColor}\`) — used selectively for CTAs, badges, and active state indicators.
-- **Secondary Accent**: \`{colors.secondary}\` (\`${secondaryColor}\`) — used for supporting data highlights and gradient overlays.
-- **Deep Surface Canvas**: \`{colors.canvas}\` (\`${darkInk}\`) — clean ultra-dark mode background.
-- **Card Radius**: \`{rounded.md}\` (12px) for buttons and cards.
-- **Typography Pairing**: Inter + JetBrains / Geist Mono for technical code & metadata.
-
-## Colors
-
-### Brand & Accent
-- **Primary Accent** (\`{colors.primary}\` — \`${primaryColor}\`): Conversion signature. Primary CTA buttons, key metrics, active states.
-- **Secondary Accent** (\`{colors.secondary}\` — \`${secondaryColor}\`): Supporting highlight for charts, badges, and gradient fills.
-
-### Surface & Neutral
-- **Canvas Dark** (\`{colors.canvas}\` — \`${darkInk}\`): Deep background canvas.
-- **Card Surface** (\`{colors.surface}\` — \`#141416\`): Elevated card container fill.
-- **Hairline Border** (\`{colors.border}\` — \`#26262a\`): Subtle stroke separation.
-
-## Typography Hierarchy
-
-| Token | Size | Weight | Line Height | Use Case |
-|---|---|---|---|---|
-| \`{typography.display-xl}\` | 56px | 800 | 1.15 | Hero headlines & campaign banners |
-| \`{typography.display-lg}\` | 36px | 700 | 1.25 | Section headings & 30-day post titles |
-| \`{typography.body-md}\` | 16px | 400 | 1.50 | Social captions & body paragraphs |
-| \`{typography.mono-code}\` | 13px | 600 | 1.40 | Code blocks, hashtags, CTA links, metadata |
-
-## Elevation & Depth
-
-- **Surface Base**: \`#0a0a0a\`
-- **Surface Layer 1**: \`#141416\` border \`#26262a\`
-- **Surface Layer 2 (Active/Hover)**: \`#1c1c1e\` border \`#3f3f46\`
-
-## AI Image Prompting Rules
-
-1. Always specify the deep canvas tone: \`deep pitch-black background (${darkInk})\`.
-2. Infuse the primary brand accent: \`${primaryColor} volumetric glow and edge lighting\`.
-3. Render style: \`3D isometric glassmorphism, octane render, 8k resolution, ultra-clean --v 6.0\`.
-4. Exclude: \`flat generic clip-art, oversaturated rainbow colors, low-res noise\`.
-`;
 }
 
 /**
