@@ -16,8 +16,10 @@ import {
   CheckCircle2,
   Target,
   Hash,
-  Copy
+  Copy,
+  Eye
 } from 'lucide-react';
+import { DesignMdVisualPreview } from './DesignMdVisualPreview';
 import { analyzeBrandAndWebsite } from '../services/aiGenerator';
 import { analyzeWebsiteWithGemini } from '../services/geminiService';
 
@@ -25,7 +27,7 @@ interface BrandAnalyzerProps {
   client: Client;
   onUpdateClient: (updatedClient: Client) => void;
   onOpenConnectSocialModal: () => void;
-  initialTab?: 'overview' | 'brand_guide_md';
+  initialTab?: 'overview' | 'brand_guide_md' | 'visual_preview';
 }
 
 export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({ 
@@ -36,7 +38,7 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressMessage, setProgressMessage] = useState('');
-  const [activeViewTab, setActiveViewTab] = useState<'overview' | 'brand_guide_md'>(initialTab);
+  const [activeViewTab, setActiveViewTab] = useState<'overview' | 'brand_guide_md' | 'visual_preview'>(initialTab);
   const [copiedMd, setCopiedMd] = useState(false);
 
   const analysis: BrandAnalysis = client.brandAnalysis || analyzeBrandAndWebsite(client);
@@ -126,7 +128,7 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
       )}
 
       {/* VIEW SELECTOR TABS */}
-      <div className="flex items-center space-x-2 border-b border-[#26262a] pb-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#26262a] pb-3">
         <button
           onClick={() => setActiveViewTab('overview')}
           className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 ${
@@ -136,7 +138,19 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
           }`}
         >
           <Globe className="w-3.5 h-3.5" />
-          <span>Website Index & Accounts Overview</span>
+          <span>Website Index & Accounts</span>
+        </button>
+
+        <button
+          onClick={() => setActiveViewTab('visual_preview')}
+          className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            activeViewTab === 'visual_preview'
+              ? 'bg-[#00d4a4] text-[#0a0a0a]'
+              : 'bg-[#141416] text-neutral-400 hover:text-white border border-[#26262a]'
+          }`}
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Interactive Visual Preview (getdesign.md UI)</span>
         </button>
 
         <button
@@ -148,7 +162,7 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
           }`}
         >
           <FileCode className="w-3.5 h-3.5" />
-          <span>Generated Markdown Brand Guide (DESIGN.md)</span>
+          <span>Raw Markdown (DESIGN.md)</span>
         </button>
       </div>
 
@@ -362,6 +376,9 @@ export const BrandAnalyzer: React.FC<BrandAnalyzerProps> = ({
 
           </div>
         </>
+      ) : activeViewTab === 'visual_preview' ? (
+        /* INTERACTIVE VISUAL DESIGN SYSTEM PREVIEW */
+        <DesignMdVisualPreview client={client} analysis={analysis} />
       ) : (
         /* GENERATED MARKDOWN BRAND GUIDE VIEW */
         <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 space-y-4 animate-fadeIn">
