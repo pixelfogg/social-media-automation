@@ -89,6 +89,8 @@ export interface Client {
   id: string;
   name: string;
   logoUrl: string;
+  logoLightUrl?: string;
+  logoDarkUrl?: string;
   websiteUrl: string;
   industry: string;
   brandGuideText: string;

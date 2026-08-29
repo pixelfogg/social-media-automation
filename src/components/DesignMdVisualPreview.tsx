@@ -106,17 +106,34 @@ export const DesignMdVisualPreview: React.FC<DesignMdVisualPreviewProps> = ({ cl
         isLight ? 'bg-white border-neutral-200 text-neutral-900 shadow-sm' : 'bg-[#0e0e11] border-[#26262a] text-white'
       }`}>
         <div className="max-w-4xl space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-mono-code"
-            style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
-          >
-            <span>{client.industry}</span>
-            <span>•</span>
-            <span>Design System Analysis</span>
-          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider font-mono-code"
+                style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+              >
+                <span>{client.industry}</span>
+                <span>•</span>
+                <span>Design System Analysis</span>
+              </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Design System Analysis of {client.name}
-          </h1>
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                Design System Analysis of {client.name}
+              </h1>
+            </div>
+
+            {/* Active Theme Logo Showcase */}
+            {(isLight ? (client.logoLightUrl || client.logoUrl) : (client.logoDarkUrl || client.logoUrl)) && (
+              <div className={`p-3 rounded-2xl border flex items-center justify-center shrink-0 ${
+                isLight ? 'bg-white border-neutral-200 shadow-xs' : 'bg-[#0a0a0a] border-[#26262a]'
+              }`}>
+                <img
+                  src={isLight ? (client.logoLightUrl || client.logoUrl) : (client.logoDarkUrl || client.logoUrl)}
+                  alt={`${client.name} Logo`}
+                  className="h-12 w-auto max-w-[160px] object-contain"
+                />
+              </div>
+            )}
+          </div>
 
           <p className={`text-sm sm:text-base leading-relaxed max-w-3xl ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
             {client.name} ({cleanDomain}) pairs high-contrast surfaces with <span className="font-bold" style={{ color: primaryColor }}>{primaryColor}</span> primary conversion accents. Built for developer-grade software products, responsive digital services, and scalable web applications.

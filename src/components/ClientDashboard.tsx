@@ -63,11 +63,13 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       {/* Client Header Workspace Bar */}
       <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
         <div className="flex items-center space-x-4">
-          <img
-            src={client.logoUrl}
-            alt={client.name}
-            className="w-14 h-14 rounded-2xl object-cover border border-[#26262a]"
-          />
+          <div className="w-14 h-14 rounded-2xl bg-[#0a0a0a] border border-[#26262a] flex items-center justify-center p-1.5 overflow-hidden">
+            <img
+              src={client.logoDarkUrl || client.logoLightUrl || client.logoUrl}
+              alt={client.name}
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
           <div>
             <div className="flex items-center space-x-2.5">
               <h1 className="text-xl font-bold text-white tracking-tight">

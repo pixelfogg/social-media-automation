@@ -378,6 +378,34 @@ export const ClientManager: React.FC<ClientManagerProps> = ({
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0a0a0a] p-3 rounded-xl border border-[#26262a]">
+                <div>
+                  <label className="block font-semibold text-neutral-300 uppercase tracking-wider mb-1 text-[10px]">
+                    Light Theme Logo URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={editingClient.logoLightUrl || ''}
+                    onChange={(e) => setEditingClient({ ...editingClient, logoLightUrl: e.target.value })}
+                    placeholder="https://example.com/logo-light.svg"
+                    className="w-full bg-[#141416] border border-[#26262a] rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-[#00d4a4] font-mono-code"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-neutral-300 uppercase tracking-wider mb-1 text-[10px]">
+                    Dark Theme Logo URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={editingClient.logoDarkUrl || ''}
+                    onChange={(e) => setEditingClient({ ...editingClient, logoDarkUrl: e.target.value })}
+                    placeholder="https://example.com/logo-dark.svg"
+                    className="w-full bg-[#141416] border border-[#26262a] rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-[#00d4a4] font-mono-code"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-semibold text-neutral-300 uppercase tracking-wider mb-1 text-[10px]">
                   Brand Guidelines & Value Proposition
