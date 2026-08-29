@@ -336,10 +336,20 @@ When generating social media graphics or campaign visuals for **${client.name}**
 /**
  * Real Gemini AI 30-Day Calendar Generator (Batch or Multi-topic synthesis)
  */
-export async function generate30DayCalendarWithGemini(client: Client): Promise<SocialPost[]> {
+export async function generate30DayCalendarWithGemini(
+  client: Client, 
+  targetYear: number = 2026, 
+  targetMonthIndex: number = 8
+): Promise<SocialPost[]> {
   const cleanDomain = client.websiteUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
   const primaryColor = client.brandColors[0] || '#00d4a4';
   const secondaryColor = client.brandColors[1] || '#3772cf';
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const monthName = monthNames[targetMonthIndex] || 'September';
+  const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
 
   const categories: PostCategory[] = [
     'Educational & Tips',
@@ -361,16 +371,16 @@ export async function generate30DayCalendarWithGemini(client: Client): Promise<S
 
   // Try generating with Gemini in a compact, highly specific prompt
   const prompt = `You are a viral social media director and creative strategist.
-Write 15 unique, high-converting social media post concepts for ${client.name} (${cleanDomain}), operating in ${client.industry}. Tone: ${client.tone}. Target: ${client.targetAudience}.
+Write 15 unique, high-converting social media post concepts for ${client.name} (${cleanDomain}) for ${monthName} ${targetYear}, operating in ${client.industry}. Tone: ${client.tone}. Target: ${client.targetAudience}.
 
 Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
 [
   {
     "dayNumber": 1,
     "category": "Educational & Tips",
-    "title": "Specific Headline for Day 1",
+    "title": "Specific ${monthName} Headline for Day 1",
     "caption": "Engaging, authentic caption with emojis, value points, and a CTA referencing ${client.websiteUrl}",
-    "hashtags": ["#Tag1", "#Tag2", "#Tag3"],
+    "hashtags": ["#${monthName}${targetYear}", "#Tag1", "#Tag2"],
     "imagePrompt": "Midjourney v6 prompt with dark mode canvas and ${primaryColor} accent lighting"
   }
 ]`;
@@ -390,56 +400,57 @@ Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
     console.warn('Gemini 30-day API call fallback, using rich contextual generator:', e);
   }
 
-  // Build a complete 30-day bespoke calendar with diverse titles, captions, and prompts
+  // Build a complete bespoke calendar with diverse titles, captions, and prompts
   const topicsByDay: Record<number, { title: string; caption: string; cat: PostCategory; ctaUrl: string }> = {
-    1: { title: `Why Traditional Approaches in ${client.industry} Are Failing in 2026`, caption: `The old playbook for ${client.industry} is officially outdated. 📉\n\nHere are 3 critical bottlenecks we see teams facing daily — and how ${client.name} solves them.\n\nRead the breakdown: ${client.websiteUrl}`, cat: 'Thought Leadership', ctaUrl: client.websiteUrl },
-    2: { title: `3 Quick Wins to Boost Your Team's Productivity This Week`, caption: `Looking to save 5+ hours this week? ⏱️💡\n\n1. Automate repetitive syncs\n2. Establish single-source workflows\n3. Leverage ${client.name} solutions\n\nWhich one will you test first?`, cat: 'Educational & Tips', ctaUrl: client.websiteUrl },
+    1: { title: `${monthName} Kickoff: Why Traditional Approaches in ${client.industry} Are Failing in ${targetYear}`, caption: `The old playbook for ${client.industry} is officially outdated this ${monthName}. 📉\n\nHere are 3 critical bottlenecks we see teams facing daily — and how ${client.name} solves them.\n\nRead the breakdown: ${client.websiteUrl}`, cat: 'Thought Leadership', ctaUrl: client.websiteUrl },
+    2: { title: `3 Quick Wins to Boost Your Team's Productivity in ${monthName}`, caption: `Looking to save 5+ hours every week this ${monthName}? ⏱️💡\n\n1. Automate repetitive syncs\n2. Establish single-source workflows\n3. Leverage ${client.name} solutions\n\nWhich one will you test first?`, cat: 'Educational & Tips', ctaUrl: client.websiteUrl },
     3: { title: `Deep Dive: Inside the Architecture of ${client.name}`, caption: `Under the hood of ${client.name} 🛠️⚡\n\nBuilt for high-performance scale, rock-solid security, and developer-grade ergonomics.\n\nExplore our platform capabilities: ${client.websiteUrl}`, cat: 'Product Spotlight', ctaUrl: `${client.websiteUrl}/services` },
-    4: { title: `How a Fast-Growing Team Cut Overhead by 42% with ${client.name}`, caption: `Real results. Measurable impact. 📊\n\n"Implementing ${client.name} gave our team an unfair advantage in execution speed."\n\nRead the case study: ${client.websiteUrl}`, cat: 'Social Proof & Case Study', ctaUrl: `${client.websiteUrl}/case-studies` },
-    5: { title: `Behind the Scenes: How Our Engineering Team Ships Weekly Updates`, caption: `Ever wondered what shipping at scale looks like? ☕🚀\n\nA sneak peek into our sprint review and quality assurance process at ${client.name}.`, cat: 'Behind The Scenes', ctaUrl: client.websiteUrl },
-    6: { title: `Unlock Premium Growth: Complimentary Strategy Access`, caption: `Ready to accelerate your ${client.industry} roadmap? 🔥\n\nClaim your exclusive onboarding package with ${client.name} today.`, cat: 'Promotional & Offer', ctaUrl: `${client.websiteUrl}/pricing` },
-    7: { title: `The 5 Essential Metrics Every ${client.industry} Leader Must Track`, caption: `If you can't measure it, you can't improve it. 📈\n\nHere are the top 5 KPIs driving compound growth in 2026 according to ${client.name}'s research.`, cat: 'Educational & Tips', ctaUrl: `${client.websiteUrl}/blog` },
+    4: { title: `How a Fast-Growing Team Cut Overhead by 42% with ${client.name}`, caption: `Real results. Measurable impact in ${monthName}. 📊\n\n"Implementing ${client.name} gave our team an unfair advantage in execution speed."\n\nRead the case study: ${client.websiteUrl}`, cat: 'Social Proof & Case Study', ctaUrl: `${client.websiteUrl}/case-studies` },
+    5: { title: `Behind the Scenes: How Our Team Ships ${monthName} Updates`, caption: `Ever wondered what shipping at scale looks like? ☕🚀\n\nA sneak peek into our sprint review and quality assurance process at ${client.name}.`, cat: 'Behind The Scenes', ctaUrl: client.websiteUrl },
+    6: { title: `Unlock Premium ${monthName} Growth: Complimentary Strategy Access`, caption: `Ready to accelerate your ${monthName} roadmap? 🔥\n\nClaim your exclusive onboarding package with ${client.name} today.`, cat: 'Promotional & Offer', ctaUrl: `${client.websiteUrl}/pricing` },
+    7: { title: `The 5 Essential Metrics Every ${client.industry} Leader Must Track This ${monthName}`, caption: `If you can't measure it, you can't improve it. 📈\n\nHere are the top 5 KPIs driving compound growth according to ${client.name}'s research.`, cat: 'Educational & Tips', ctaUrl: `${client.websiteUrl}/blog` },
     8: { title: `Myth Busting: 3 Common Misconceptions About ${client.industry}`, caption: `Let's clear the air on modern ${client.industry} workflows. 🧠❌\n\nMyth 1: It takes months to implement.\nMyth 2: Complex setups require heavy maintenance.\n\nSee the truth: ${client.websiteUrl}`, cat: 'Thought Leadership', ctaUrl: client.websiteUrl },
     9: { title: `Feature Spotlight: Instant Sync & Smart Automation in Action`, caption: `Tired of context switching? 🔄\n\nWatch how ${client.name} streamlines your daily operations in under 60 seconds.`, cat: 'Product Spotlight', ctaUrl: `${client.websiteUrl}/services` },
-    10: { title: `Client Milestone: 10 Million Data Points Processed This Quarter`, caption: `Huge milestone celebration! 🎉\n\nThank you to our amazing community and partners who trust ${client.name} for mission-critical operations.`, cat: 'Social Proof & Case Study', ctaUrl: client.websiteUrl },
+    10: { title: `${monthName} Client Milestone: High-Volume Data Operations`, caption: `Huge milestone celebration! 🎉\n\nThank you to our amazing community and partners who trust ${client.name} for mission-critical operations.`, cat: 'Social Proof & Case Study', ctaUrl: client.websiteUrl },
     11: { title: `Meet the Makers: What Drives Our Core Mission at ${client.name}`, caption: `Great software is built by passionate people. 🤝\n\nMeet the dedicated product architects and designers building the future of ${client.name}.`, cat: 'Behind The Scenes', ctaUrl: client.websiteUrl },
-    12: { title: `Limited-Time Onboarding: Get 1-on-1 Consultation Support`, caption: `Supercharge your Q4 goals with ${client.name}! 🚀\n\nSchedule your personalized walkthrough with our technical solution team.`, cat: 'Promotional & Offer', ctaUrl: `${client.websiteUrl}/contact` }
+    12: { title: `Special ${monthName} Onboarding: Get 1-on-1 Consultation Support`, caption: `Supercharge your goals with ${client.name}! 🚀\n\nSchedule your personalized walkthrough with our technical solution team.`, cat: 'Promotional & Offer', ctaUrl: `${client.websiteUrl}/contact` }
   };
 
-  return Array.from({ length: 30 }, (_, index) => {
+  return Array.from({ length: daysInMonth }, (_, index) => {
     const day = index + 1;
     const aiItem = aiGeneratedItems[index] || (aiGeneratedItems[index % (aiGeneratedItems.length || 1)]);
     const fallbackTopic = topicsByDay[day] || {
-      title: `Day ${day}: Mastering ${categories[index % categories.length]} in ${client.industry}`,
-      caption: `🚀 Day ${day} Strategy with ${client.name}:\n\nUnlock next-level performance and stay ahead in ${client.industry}.\n\n👉 Discover how at: ${client.websiteUrl}`,
+      title: `${monthName} Day ${day}: Mastering ${categories[index % categories.length]} in ${client.industry}`,
+      caption: `🚀 ${monthName} Day ${day} Strategy with ${client.name}:\n\nUnlock next-level performance and stay ahead in ${client.industry}.\n\n👉 Discover how at: ${client.websiteUrl}`,
       cat: categories[index % categories.length],
       ctaUrl: day % 4 === 0 ? `${client.websiteUrl}/case-studies` : (day % 3 === 0 ? `${client.websiteUrl}/services` : client.websiteUrl)
     };
 
     const title = (aiItem && aiItem.title && aiItem.title.length > 5 && !aiItem.title.includes('Day 1:')) 
-      ? `Day ${day}: ${aiItem.title}` 
+      ? `${monthName} Day ${day}: ${aiItem.title}` 
       : (aiItem?.title || fallbackTopic.title);
 
     const caption = aiItem?.caption || fallbackTopic.caption;
     const category = (aiItem?.category as PostCategory) || fallbackTopic.cat;
     const hashtags = (aiItem?.hashtags && aiItem.hashtags.length > 0) 
       ? aiItem.hashtags 
-      : [`#${cleanDomain.split('.')[0]}`, `#${client.name.replace(/\s+/g, '')}`, `#${category.replace(/[^a-zA-Z]/g, '')}`, '#Automation', '#Growth'];
+      : [`#${cleanDomain.split('.')[0]}`, `#${monthName}${targetYear}`, `#${client.name.replace(/\s+/g, '')}`, `#${category.replace(/[^a-zA-Z]/g, '')}`, '#Automation', '#Growth'];
 
-    const imagePrompt = aiItem?.imagePrompt || `High-end commercial brand visual for "${title}" according to ${client.name} DESIGN.md (${cleanDomain}). 3D isometric glassmorphism & engineering precision, obsidian primary (#020617) with slate (#334155) accents, warm off-white canvas backdrop (#F9F8F6), soft ambient lighting, Octane Render 3D, 8k resolution, ray-tracing reflections, hyper-detailed --v 6.0 --ar 1:1 --style raw`;
+    const imagePrompt = aiItem?.imagePrompt || `High-end commercial brand visual for "${title}" for ${monthName} ${targetYear} according to ${client.name} DESIGN.md (${cleanDomain}). 3D isometric glassmorphism & engineering precision, obsidian primary (#020617) with slate (#334155) accents, warm off-white canvas backdrop (#F9F8F6), soft ambient lighting, Octane Render 3D, 8k resolution, ray-tracing reflections, hyper-detailed --v 6.0 --ar 1:1 --style raw`;
     const targetUrl = fallbackTopic.ctaUrl;
+    const formattedDate = `${targetYear}-${String(targetMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
     return {
-      id: `post_${client.id}_day_${day}`,
+      id: `post_${client.id}_${targetYear}_${targetMonthIndex + 1}_${day}`,
       clientId: client.id,
       dayNumber: day,
-      scheduledDate: new Date(Date.now() + (index * 86400000)).toISOString().split('T')[0],
+      scheduledDate: formattedDate,
       scheduledTime: `${((day * 3) % 12) || 9}:${day % 2 === 0 ? '00' : '30'} ${day % 2 === 0 ? 'AM' : 'PM'}`,
       title,
       category,
       platforms: platformPresets[index % platformPresets.length],
       caption,
-      description: `Targeted Day ${day} campaign post for ${client.name}`,
+      description: `Targeted ${monthName} Day ${day} campaign post for ${client.name}`,
       cta: `Learn more at ${cleanDomain}`,
       targetUrl,
       hashtags,

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Client, SocialPost, SocialPlatform, GenerationSettings, PostCategory } from '../types';
 import { 
   Sparkles, 
@@ -85,7 +85,17 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     targetPlatforms: ['facebook', 'instagram', 'linkedin', 'twitter']
   });
 
+  // Sync genSettings when selected month/year changes
+  useEffect(() => {
+    setGenSettings(prev => ({
+      ...prev,
+      targetMonth: `${MONTH_NAMES[selectedMonth]} ${selectedYear}`
+    }));
+  }, [selectedMonth, selectedYear]);
+
   const posts = client.posts || [];
+  const currentMonthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  const currentMonthYearString = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
 
   // Month Navigation Handlers
   const handlePrevMonth = () => {
@@ -106,17 +116,19 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     }
   };
 
-  const currentMonthYearString = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
-
-  // Filter posts for current selected month + search filters
-  const filteredPosts = useMemo(() => {
-    const targetMonthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
-
+  // Posts strictly belonging to the currently selected month
+  const monthPosts = useMemo(() => {
     return posts.filter(post => {
-      const postMonthMatch = post.scheduledDate
-        ? post.scheduledDate.startsWith(targetMonthPrefix)
-        : true;
+      if (post.scheduledDate) {
+        return post.scheduledDate.startsWith(currentMonthPrefix);
+      }
+      return false;
+    });
+  }, [posts, currentMonthPrefix]);
 
+  // Filter posts for current selected month + user query/filters
+  const filteredPosts = useMemo(() => {
+    return monthPosts.filter(post => {
       const matchesSearch = 
         post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         post.caption.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,50 +138,45 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
       const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
       const matchesStatus = selectedStatus === 'all' || post.status === selectedStatus;
 
-      return postMonthMatch && matchesSearch && matchesPlatform && matchesCategory && matchesStatus;
+      return matchesSearch && matchesPlatform && matchesCategory && matchesStatus;
     });
-  }, [posts, selectedYear, selectedMonth, searchTerm, selectedPlatform, selectedCategory, selectedStatus]);
+  }, [monthPosts, searchTerm, selectedPlatform, selectedCategory, selectedStatus]);
 
-  // Calendar Grid Calculations
+  // Calendar Grid Calculations strictly for active month
   const calendarDays = useMemo(() => {
     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const firstDayIndex = new Date(selectedYear, selectedMonth, 1).getDay(); // 0 = Sun
     
     // Group posts by day number (1 to daysInMonth)
     const postsByDay: { [day: number]: SocialPost[] } = {};
-    const monthPrefix = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
 
-    posts.forEach(post => {
-      let dayNumber: number | null = null;
-      if (post.scheduledDate && post.scheduledDate.startsWith(monthPrefix)) {
+    monthPosts.forEach(post => {
+      if (post.scheduledDate && post.scheduledDate.startsWith(currentMonthPrefix)) {
         const parts = post.scheduledDate.split('-');
-        dayNumber = parseInt(parts[2], 10);
-      } else if (post.dayNumber >= 1 && post.dayNumber <= daysInMonth) {
-        dayNumber = post.dayNumber;
-      }
-
-      if (dayNumber && dayNumber >= 1 && dayNumber <= daysInMonth) {
-        if (!postsByDay[dayNumber]) postsByDay[dayNumber] = [];
-        postsByDay[dayNumber].push(post);
+        const dayNumber = parseInt(parts[2], 10);
+        if (dayNumber >= 1 && dayNumber <= daysInMonth) {
+          if (!postsByDay[dayNumber]) postsByDay[dayNumber] = [];
+          postsByDay[dayNumber].push(post);
+        }
       }
     });
 
     return { daysInMonth, firstDayIndex, postsByDay };
-  }, [posts, selectedYear, selectedMonth]);
+  }, [monthPosts, selectedYear, selectedMonth, currentMonthPrefix]);
 
   // Month Statistics
   const monthStats = useMemo(() => {
-    const total = filteredPosts.length;
-    const published = filteredPosts.filter(p => p.status === 'published').length;
-    const scheduled = filteredPosts.filter(p => p.status === 'scheduled').length;
-    const drafts = filteredPosts.filter(p => p.status === 'draft').length;
+    const total = monthPosts.length;
+    const published = monthPosts.filter(p => p.status === 'published').length;
+    const scheduled = monthPosts.filter(p => p.status === 'scheduled').length;
+    const drafts = monthPosts.filter(p => p.status === 'draft').length;
     const daysWithPosts = Object.keys(calendarDays.postsByDay).length;
     const coveragePercent = Math.round((daysWithPosts / calendarDays.daysInMonth) * 100);
 
     return { total, published, scheduled, drafts, daysWithPosts, coveragePercent };
-  }, [filteredPosts, calendarDays]);
+  }, [monthPosts, calendarDays]);
 
-  // Regenerate / AI Generation with Month context
+  // Regenerate / AI Generation with Month-specific content and multi-month preservation
   const handleRegenerateMonth = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsRegenerating(true);
@@ -179,43 +186,21 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         ...client,
         tone: genSettings.toneOverride || client.tone
       };
-      const freshPosts = await generate30DayCalendarWithGemini(customClient);
-      
-      const mappedPosts = freshPosts.map((p, idx) => {
-        const day = (idx % calendarDays.daysInMonth) + 1;
-        const formattedDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return {
-          ...p,
-          dayNumber: day,
-          scheduledDate: formattedDate
-        };
-      });
+
+      let freshMonthPosts: SocialPost[];
+      try {
+        freshMonthPosts = await generate30DayCalendarWithGemini(customClient, selectedYear, selectedMonth);
+      } catch (err) {
+        console.warn('Gemini generation fallback:', err);
+        freshMonthPosts = generate30DayCalendar(customClient, selectedYear, selectedMonth);
+      }
+
+      // Preserve posts from all OTHER months, replace/append for current selected month
+      const otherMonthsPosts = posts.filter(p => !p.scheduledDate || !p.scheduledDate.startsWith(currentMonthPrefix));
 
       onUpdateClient({
         ...client,
-        posts: mappedPosts
-      });
-    } catch (err) {
-      console.warn('Gemini 30-day generation error:', err);
-      const customClient = {
-        ...client,
-        tone: genSettings.toneOverride || client.tone
-      };
-      const freshPosts = generate30DayCalendar(customClient);
-      
-      const mappedPosts = freshPosts.map((p, idx) => {
-        const day = (idx % calendarDays.daysInMonth) + 1;
-        const formattedDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return {
-          ...p,
-          dayNumber: day,
-          scheduledDate: formattedDate
-        };
-      });
-
-      onUpdateClient({
-        ...client,
-        posts: mappedPosts
+        posts: [...otherMonthsPosts, ...freshMonthPosts]
       });
     } finally {
       setIsRegenerating(false);
@@ -240,7 +225,12 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
   };
 
   const handleApproveAllDrafts = () => {
-    const updated = posts.map(p => p.status === 'draft' ? { ...p, status: 'scheduled' as const } : p);
+    const updated = posts.map(p => {
+      if (p.scheduledDate?.startsWith(currentMonthPrefix) && p.status === 'draft') {
+        return { ...p, status: 'scheduled' as const };
+      }
+      return p;
+    });
     onUpdateClient({
       ...client,
       posts: updated
@@ -319,19 +309,19 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
     const dayNum = parseInt(newPostDate.split('-')[2], 10);
     const newPost: SocialPost = {
-      id: `post_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: `post_${client.id}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       clientId: client.id,
       dayNumber: dayNum,
       scheduledDate: newPostDate,
       scheduledTime: '10:00 AM',
-      title: `Day ${dayNum}: New Scheduled Campaign Post`,
+      title: `${MONTH_NAMES[selectedMonth]} Day ${dayNum}: New Scheduled Campaign Post`,
       category: 'Product Spotlight',
       platforms: ['instagram', 'facebook', 'linkedin'],
       caption: `Discover our latest updates and solutions at ${client.name}! 🚀\n\nLearn more: ${client.websiteUrl}`,
       description: `Targeted post scheduled for ${newPostDate}`,
       cta: `Explore at ${client.websiteUrl}`,
       targetUrl: client.websiteUrl,
-      hashtags: [`#${client.name.replace(/\s+/g, '')}`, `#Innovation`, `#${client.industry.replace(/\s+/g, '')}`],
+      hashtags: [`#${client.name.replace(/\s+/g, '')}`, `#${MONTH_NAMES[selectedMonth]}${selectedYear}`, `#Innovation`],
       imagePrompt: `Clean modern social card for ${client.name}, brand color ${client.brandColors[0] || '#00d4a4'}, 8k resolution`,
       imageSource: 'preset',
       status: 'scheduled'
@@ -353,11 +343,12 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     if (previewPost?.id === postId) setPreviewPost(null);
   };
 
-  const handleClearAllPosts = () => {
-    if (window.confirm(`Are you sure you want to clear all posts for ${client.name}?`)) {
+  const handleClearMonthPosts = () => {
+    if (window.confirm(`Are you sure you want to clear all posts for ${currentMonthYearString}? (Posts in other months will be preserved)`)) {
+      const remainingPosts = posts.filter(p => !p.scheduledDate || !p.scheduledDate.startsWith(currentMonthPrefix));
       onUpdateClient({
         ...client,
-        posts: []
+        posts: remainingPosts
       });
       setPreviewPost(null);
     }
@@ -376,10 +367,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <span className="text-xs text-neutral-400">Client: <strong className="text-white">{client.name}</strong></span>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Monthly Social Media Planner & Calendar
+            {currentMonthYearString} Content Calendar
           </h1>
           <p className="text-neutral-400 text-sm max-w-2xl mt-1">
-            Manage, schedule, and visualize your 30-day social content pipeline across Instagram, LinkedIn, Facebook, and X.
+            Manage, schedule, and visualize your unique monthly social pipeline across Instagram, LinkedIn, Facebook, and X.
           </p>
         </div>
 
@@ -534,7 +525,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search posts..."
+              placeholder="Search month posts..."
               className="w-full bg-[#0a0a0a] border border-[#26262a] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00d4a4]"
             />
           </div>
@@ -578,7 +569,8 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
           <button
             onClick={handleExportCSV}
-            className="btn-pill-dark p-2 text-xs text-neutral-300 hover:text-white"
+            disabled={monthPosts.length === 0}
+            className="btn-pill-dark p-2 text-xs text-neutral-300 hover:text-white disabled:opacity-30"
             title="Export CSV"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-[#00d4a4]" />
@@ -586,7 +578,8 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
           <button
             onClick={handleExportJSON}
-            className="btn-pill-dark p-2 text-xs text-neutral-300 hover:text-white"
+            disabled={monthPosts.length === 0}
+            className="btn-pill-dark p-2 text-xs text-neutral-300 hover:text-white disabled:opacity-30"
             title="Export JSON"
           >
             <Download className="w-3.5 h-3.5 text-[#00d4a4]" />
@@ -594,18 +587,19 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
           <button
             onClick={handleApproveAllDrafts}
-            className="btn-pill-dark px-2.5 py-1.5 text-xs text-neutral-300 hover:text-white flex items-center space-x-1"
-            title="Approve All Drafts"
+            disabled={monthPosts.length === 0}
+            className="btn-pill-dark px-2.5 py-1.5 text-xs text-neutral-300 hover:text-white flex items-center space-x-1 disabled:opacity-30"
+            title="Approve All Drafts for this Month"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-[#00d4a4]" />
             <span className="hidden sm:inline">Approve All</span>
           </button>
 
-          {posts.length > 0 && (
+          {monthPosts.length > 0 && (
             <button
-              onClick={handleClearAllPosts}
+              onClick={handleClearMonthPosts}
               className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 transition-colors"
-              title="Clear all posts"
+              title={`Clear ${currentMonthYearString} posts`}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -978,16 +972,16 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         </div>
       )}
 
-      {/* Empty State */}
-      {filteredPosts.length === 0 && (
+      {/* Empty State when active month has no posts */}
+      {monthPosts.length === 0 && (
         <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-12 text-center space-y-4 max-w-xl mx-auto">
           <div className="w-12 h-12 rounded-2xl bg-[#00d4a4]/10 border border-[#00d4a4]/20 flex items-center justify-center mx-auto text-[#00d4a4]">
-            <Sparkles className="w-6 h-6" />
+            <CalendarIcon className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">No Posts for {currentMonthYearString}</h3>
+            <h3 className="text-base font-bold text-white">No Posts Scheduled for {currentMonthYearString}</h3>
             <p className="text-xs text-neutral-400">
-              Click below to generate a tailored 30-day viral content strategy for <strong className="text-white">{client.name}</strong> for {currentMonthYearString}.
+              Each month maintains its own distinct campaign schedule. Generate a tailored {currentMonthYearString} strategy for <strong className="text-white">{client.name}</strong> or schedule individual dates on the calendar above.
             </p>
           </div>
           <button
@@ -1232,7 +1226,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-[#00d4a4]" />
-                <h3 className="text-base font-bold text-white">Custom 30-Day AI Post Synthesizer</h3>
+                <h3 className="text-base font-bold text-white">Custom AI Post Synthesizer for {currentMonthYearString}</h3>
               </div>
               <button
                 onClick={() => setShowGenModal(false)}
@@ -1259,7 +1253,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
               <div>
                 <label className="block font-semibold text-neutral-300 uppercase tracking-wider mb-1 text-[10px]">
-                  Primary Product / Focus Campaign Topic
+                  Primary Focus Campaign Topic for {MONTH_NAMES[selectedMonth]}
                 </label>
                 <input
                   type="text"
@@ -1285,7 +1279,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                   className="btn-mint flex items-center space-x-1.5 px-5 py-2 font-bold disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
-                  <span>{isRegenerating ? 'Synthesizing...' : 'Generate 30-Day Campaign'}</span>
+                  <span>{isRegenerating ? 'Synthesizing...' : `Generate ${MONTH_NAMES[selectedMonth]} Campaign`}</span>
                 </button>
               </div>
             </form>

@@ -87,7 +87,14 @@ export function getClients(): Client[] {
       saveClients(initialized);
       return initialized;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return parsed.map((c: Client) => ({
+      ...c,
+      posts: (c.posts || []).map(p => ({
+        ...p,
+        scheduledDate: p.scheduledDate || `2026-09-${String(p.dayNumber || 1).padStart(2, '0')}`
+      }))
+    }));
   } catch (err) {
     console.error('Failed to parse database from LocalStorage:', err);
     return INITIAL_CLIENTS;

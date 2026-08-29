@@ -139,9 +139,31 @@ export function analyzeBrandAndWebsite(client: Client): BrandAnalysis {
   };
 }
 
-export function generate30DayCalendar(client: Client): SocialPost[] {
+const MONTH_NAMES_LIST = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const MONTHLY_THEMES: Record<number, { focus: string; tag: string }> = {
+  0: { focus: 'New Year Vision & Q1 Growth Kickoff', tag: 'NewYearStrategy' },
+  1: { focus: 'High-Impact Automation & Team Velocity', tag: 'ProductivityGains' },
+  2: { focus: 'Q1 Wrap-up & Strategic Performance Optimization', tag: 'Q1Milestones' },
+  3: { focus: 'Q2 Strategy Launch & Spring Scalability', tag: 'Q2Roadmap' },
+  4: { focus: 'Enterprise Efficiency & Peak Execution', tag: 'PeakExecution' },
+  5: { focus: 'Mid-Year Benchmarking & ROI Acceleration', tag: 'MidYearReview' },
+  6: { focus: 'Q3 Innovation & Next-Gen Architecture', tag: 'InnovationPush' },
+  7: { focus: 'Product Deep-Dives & Autumn Campaign Prep', tag: 'DeepDiveSeries' },
+  8: { focus: 'Q3 Push & Enterprise Automation Scaling', tag: 'EnterpriseScale' },
+  9: { focus: 'Q4 Acceleration & Year-End Pipeline Surge', tag: 'Q4Sprint' },
+  10: { focus: 'Cyber Month Conversion & Customer Gratitude', tag: 'CyberImpact' },
+  11: { focus: 'Annual Wrap-Up, Client Milestones & Future Vision', tag: 'YearInReview' }
+};
+
+export function generate30DayCalendar(client: Client, targetYear: number = 2026, targetMonthIndex: number = 8): SocialPost[] {
   const posts: SocialPost[] = [];
-  const startDate = new Date();
+  const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
+  const monthName = MONTH_NAMES_LIST[targetMonthIndex] || 'September';
+  const monthTheme = MONTHLY_THEMES[targetMonthIndex] || { focus: `${client.industry} Innovation`, tag: 'ProStrategy' };
 
   const domain = client.websiteUrl.endsWith('/') ? client.websiteUrl.slice(0, -1) : client.websiteUrl;
   const brandName = client.name;
@@ -150,10 +172,8 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
   const secondaryColor = client.brandColors[1] || '#3772cf';
   const darkCanvas = client.brandColors[2] || '#0a0a0a';
 
-  for (let i = 1; i <= 30; i++) {
-    const postDate = new Date(startDate);
-    postDate.setDate(startDate.getDate() + (i - 1));
-    const formattedDate = postDate.toISOString().split('T')[0];
+  for (let i = 1; i <= daysInMonth; i++) {
+    const formattedDate = `${targetYear}-${String(targetMonthIndex + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
 
     const category = CATEGORIES[(i - 1) % CATEGORIES.length];
     const platforms = PLATFORM_PRESETS[(i - 1) % PLATFORM_PRESETS.length];
@@ -170,48 +190,48 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
 
     switch (category) {
       case 'Educational & Tips':
-        title = `Day ${i}: 5 Proven ${industry} Strategies for Maximum Impact`;
-        caption = `Stop guessing, start growing! 🚀 Here are 5 battle-tested strategies to elevate your results in ${industry} this year.\n\nKey Takeaways:\n1️⃣ Optimize early workflow\n2️⃣ Data-driven decision making\n3️⃣ Continuous customer feedback loop\n\nWhich of these are you implementing this week? Drop a comment below! 👇`;
-        description = `In-depth breakdown of top 5 ${industry} practices designed to give our community actionable advice today.`;
+        title = `${monthName} Day ${i}: 5 Actionable ${industry} Tactics for ${monthTheme.focus}`;
+        caption = `Level up your ${monthName} execution! 🚀 Here are 5 battle-tested strategies to elevate your results in ${industry} this month.\n\nKey Takeaways:\n1️⃣ Optimize workflow early in ${monthName}\n2️⃣ Data-driven decision making\n3️⃣ Continuous customer feedback loops\n\nWhich of these are you implementing this week? Drop a comment below! 👇`;
+        description = `In-depth breakdown of top 5 ${industry} practices designed to give our community actionable advice for ${monthName}.`;
         cta = `Read the complete breakdown on our blog at ${domain}/blog/strategies`;
         targetUrl = `${domain}/blog/strategies`;
-        hashtags = [`#${industry.replace(/\s+/g, '')}Tips`, `#ProTips`, `#GrowthHacks`, `#${brandName.replace(/\s+/g, '')}`];
-        imagePrompt = `Minimalist 3D isometric graphic tailored to ${brandName} Brand Guide. Features glowing primary accent ${primaryColor} and ${secondaryColor} elements on deep dark canvas ${darkCanvas}, 12px rounded cards, studio lighting, 8k resolution.`;
+        hashtags = [`#${industry.replace(/\s+/g, '')}Tips`, `#${monthName}${targetYear}`, `#${monthTheme.tag}`, `#${brandName.replace(/\s+/g, '')}`];
+        imagePrompt = `Minimalist 3D isometric graphic tailored to ${brandName} Brand Guide. Focus on ${monthTheme.focus}. Glowing primary accent ${primaryColor} and ${secondaryColor} elements on deep dark canvas ${darkCanvas}, 12px rounded cards, studio lighting, 8k resolution.`;
         break;
 
       case 'Product Spotlight':
-        title = `Day ${i}: Unlocking Peak Performance with ${brandName}`;
-        caption = `Did you know ${brandName} is built to save you up to 15+ hours every week? 💡\n\nOur platform streamlines your ${industry} workflow with smart automation, seamless integrations, and real-time insights.\n\nReady to scale without the stress? Let’s get started today!`;
-        description = `Highlighting primary feature matrix and time-saving value proposition of ${brandName}.`;
+        title = `${monthName} Day ${i}: Unlocking Peak ${monthName} Performance with ${brandName}`;
+        caption = `Did you know ${brandName} is built to save you up to 15+ hours every week throughout ${monthName}? 💡\n\nOur platform streamlines your ${industry} workflow with smart automation, seamless integrations, and real-time insights.\n\nReady to scale without the stress? Let’s get started today!`;
+        description = `Highlighting primary feature matrix and time-saving value proposition of ${brandName} for ${monthName}.`;
         cta = `Claim your free demo at ${domain}/demo`;
         targetUrl = `${domain}/demo`;
-        hashtags = [`#ProductSpotlight`, `#${brandName.replace(/\s+/g, '')}`, `#WorkflowAutomation`, `#Innovation`];
+        hashtags = [`#ProductSpotlight`, `#${brandName.replace(/\s+/g, '')}`, `#${monthName}Growth`, `#WorkflowAutomation`];
         imagePrompt = `Sleek dark mode UI dashboard mockup following ${brandName} Brand Guide. Glowing graphs in ${primaryColor}, dark surface ${darkCanvas}, clean Inter typography overlays, high-end studio lighting.`;
         break;
 
       case 'Behind The Scenes':
-        title = `Day ${i}: How We Build ${brandName} Behind the Curtains`;
-        caption = `Ever wondered what goes into building a leading product in ${industry}? ☕✨\n\nHere’s a peek inside our team’s weekly sync! From brainstorming new features to rigorous testing, every detail matters.\n\nWhat’s your favorite behind-the-scenes part of your team's workflow?`;
+        title = `${monthName} Day ${i}: How We Build ${brandName} Behind the Curtains`;
+        caption = `Ever wondered what goes into building a leading product in ${industry} during ${monthName}? ☕✨\n\nHere’s a peek inside our team’s weekly sync! From brainstorming new features to rigorous testing, every detail matters.\n\nWhat’s your favorite behind-the-scenes part of your team's workflow?`;
         description = `Humanizing the brand through authentic team moments and engineering culture highlights.`;
         cta = `Join our team or learn more at ${domain}/about`;
         targetUrl = `${domain}/about`;
-        hashtags = [`#BehindTheScenes`, `#Culture`, `#TeamWork`, `#${brandName.replace(/\s+/g, '')}Life`];
+        hashtags = [`#BehindTheScenes`, `#Culture`, `#${monthName}Vibes`, `#${brandName.replace(/\s+/g, '')}Life`];
         imagePrompt = `Authentic 35mm photograph of modern engineering workspace matching ${brandName} brand tone (${client.tone}). Warm ambient lighting, team collaboration around glass whiteboard, rich cinematic depth.`;
         break;
 
       case 'Thought Leadership':
-        title = `Day ${i}: The Future of ${industry} Over the Next 5 Years`;
-        caption = `The landscape of ${industry} is evolving faster than ever. ⚡\n\nWhere will the industry be in 2030? We analyzed market trends and identified 3 key shifts:\n• AI integration across core operations\n• Hyper-personalized customer experiences\n• Sustainable & scalable architectures.\n\nDo you agree with these predictions?`;
-        description = `Executive perspective post establishing ${brandName} as a visionary industry leader.`;
-        cta = `Download our full Trend Report at ${domain}/reports/2026-trends`;
-        targetUrl = `${domain}/reports/2026-trends`;
-        hashtags = [`#ThoughtLeadership`, `#FutureOfWork`, `#${industry.replace(/\s+/g, '')}Trends`, `#Leadership`];
+        title = `${monthName} Day ${i}: The State of ${industry} in ${monthName} ${targetYear}`;
+        caption = `The landscape of ${industry} is evolving rapidly this ${monthName}. ⚡\n\nWhere will the industry be over the next quarter? We analyzed market trends and identified 3 key shifts:\n• AI integration across core operations\n• Hyper-personalized customer experiences\n• Sustainable & scalable architectures.\n\nDo you agree with these predictions?`;
+        description = `Executive perspective post establishing ${brandName} as a visionary industry leader in ${monthName}.`;
+        cta = `Download our full Trend Report at ${domain}/reports/${targetYear}-trends`;
+        targetUrl = `${domain}/reports/${targetYear}-trends`;
+        hashtags = [`#ThoughtLeadership`, `#FutureOfWork`, `#${industry.replace(/\s+/g, '')}Trends`, `#${monthTheme.tag}`];
         imagePrompt = `Futuristic technological network graphic aligned with ${brandName} Brand Guide. Glowing nodes in ${primaryColor}, dark metallic background ${darkCanvas}, ultra-detailed render.`;
         break;
 
       case 'Social Proof & Case Study':
-        title = `Day ${i}: How Client X Achieved 310% ROI with ${brandName}`;
-        caption = `Real Results. Real Growth. 📊\n\nSee how one of our partner brands transformed their ${industry} operations, slashing manual overhead by 60% and achieving 3.1x growth in under 90 days!\n\n"Working with ${brandName} transformed our entire execution speed."`;
+        title = `${monthName} Day ${i}: How Client X Achieved 310% ROI with ${brandName}`;
+        caption = `Real Results. Real Growth in ${monthName}. 📊\n\nSee how one of our partner brands transformed their ${industry} operations, slashing manual overhead by 60% and achieving 3.1x growth!\n\n"Working with ${brandName} transformed our entire execution speed."`;
         description = `Customer success story highlighting verifiable impact metrics and quote.`;
         cta = `Read the full case study at ${domain}/case-studies/client-x`;
         targetUrl = `${domain}/case-studies/client-x`;
@@ -220,18 +240,18 @@ export function generate30DayCalendar(client: Client): SocialPost[] {
         break;
 
       case 'Promotional & Offer':
-        title = `Day ${i}: Exclusive Invitation for ${industry} Trailblazers`;
-        caption = `Ready to take your ${industry} results to the next level? 🔥\n\nFor a limited time, we're unlocking exclusive access to ${brandName}'s premium feature suite with complimentary onboarding support.\n\nDon't let your competitors get ahead!`;
-        description = `Targeted conversion campaign driving signups for ${brandName}.`;
+        title = `${monthName} Day ${i}: Exclusive ${monthName} Invitation for ${industry} Trailblazers`;
+        caption = `Ready to take your ${industry} results to the next level this ${monthName}? 🔥\n\nFor a limited time, we're unlocking exclusive access to ${brandName}'s premium feature suite with complimentary onboarding support.\n\nDon't let your competitors get ahead!`;
+        description = `Targeted conversion campaign driving signups for ${brandName} in ${monthName}.`;
         cta = `Claim your exclusive offer at ${domain}/pricing`;
         targetUrl = `${domain}/pricing`;
-        hashtags = [`#SpecialOffer`, `#${brandName.replace(/\s+/g, '')}`, `#Exclusive`, `#UpgradeToday`];
+        hashtags = [`#SpecialOffer`, `#${brandName.replace(/\s+/g, '')}`, `#${monthName}Offer`, `#UpgradeToday`];
         imagePrompt = `Sleek promotional render obeying ${brandName} Brand Guide. Saturated ${primaryColor} CTA badge, 12px rounded cards, dark studio backdrop, 8k resolution.`;
         break;
     }
 
     posts.push({
-      id: `post_${client.id}_day_${i}`,
+      id: `post_${client.id}_${targetYear}_${targetMonthIndex + 1}_${i}`,
       clientId: client.id,
       dayNumber: i,
       scheduledDate: formattedDate,
