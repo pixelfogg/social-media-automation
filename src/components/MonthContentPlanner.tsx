@@ -20,7 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Eye
+  Eye,
+  CalendarDays
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { PostGraphicCard } from './PostGraphicCard';
@@ -34,11 +35,16 @@ interface MonthContentPlannerProps {
   onOpenPublisherForPost: (post: SocialPost) => void;
 }
 
-type ViewMode = 'grid' | 'calendar' | 'list';
+type ViewMode = 'calendar' | 'grid' | 'list';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const MONTH_SHORT_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -75,7 +81,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
   const [editingPost, setEditingPost] = useState<SocialPost | null>(null);
   const [reschedulingPost, setReschedulingPost] = useState<SocialPost | null>(null);
   const [showGenModal, setShowGenModal] = useState(false);
-  const [newPostDate, setNewPostDate] = useState<string | null>(null); // For "Add Post on Date"
+  const [newPostDate, setNewPostDate] = useState<string | null>(null);
   const [previewPost, setPreviewPost] = useState<SocialPost | null>(null);
 
   const [genSettings, setGenSettings] = useState<GenerationSettings>({
@@ -85,7 +91,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     targetPlatforms: ['facebook', 'instagram', 'linkedin', 'twitter']
   });
 
-  // Sync genSettings when selected month/year changes
   useEffect(() => {
     setGenSettings(prev => ({
       ...prev,
@@ -116,13 +121,33 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     }
   };
 
+  const handleSetCurrentMonth = () => {
+    const now = new Date();
+    setSelectedMonth(now.getMonth());
+    setSelectedYear(now.getFullYear());
+  };
+
+  // Posts count map for all 12 months in the selected year
+  const postCountsByMonth = useMemo(() => {
+    const counts: { [m: number]: number } = {};
+    for (let m = 0; m < 12; m++) counts[m] = 0;
+    
+    posts.forEach(p => {
+      if (p.scheduledDate && p.scheduledDate.startsWith(`${selectedYear}-`)) {
+        const parts = p.scheduledDate.split('-');
+        const mIdx = parseInt(parts[1], 10) - 1;
+        if (mIdx >= 0 && mIdx < 12) {
+          counts[mIdx] = (counts[mIdx] || 0) + 1;
+        }
+      }
+    });
+    return counts;
+  }, [posts, selectedYear]);
+
   // Posts strictly belonging to the currently selected month
   const monthPosts = useMemo(() => {
     return posts.filter(post => {
-      if (post.scheduledDate) {
-        return post.scheduledDate.startsWith(currentMonthPrefix);
-      }
-      return false;
+      return post.scheduledDate ? post.scheduledDate.startsWith(currentMonthPrefix) : false;
     });
   }, [posts, currentMonthPrefix]);
 
@@ -147,7 +172,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
     const firstDayIndex = new Date(selectedYear, selectedMonth, 1).getDay(); // 0 = Sun
     
-    // Group posts by day number (1 to daysInMonth)
     const postsByDay: { [day: number]: SocialPost[] } = {};
 
     monthPosts.forEach(post => {
@@ -314,7 +338,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
       dayNumber: dayNum,
       scheduledDate: newPostDate,
       scheduledTime: '10:00 AM',
-      title: `${MONTH_NAMES[selectedMonth]} Day ${dayNum}: New Scheduled Campaign Post`,
+      title: `${MONTH_NAMES[selectedMonth]} Day ${dayNum}: New Campaign Post`,
       category: 'Product Spotlight',
       platforms: ['instagram', 'facebook', 'linkedin'],
       caption: `Discover our latest updates and solutions at ${client.name}! 🚀\n\nLearn more: ${client.websiteUrl}`,
@@ -355,97 +379,128 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header Banner with Month Selector */}
-      <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+    <div className="space-y-5 animate-fadeIn">
+      
+      {/* TOP HEADER: Clean Title & Action Center */}
+      <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+        
+        {/* Left: Month Title, Client & Status */}
         <div>
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#00d4a4]/10 text-[#00d4a4] border border-[#00d4a4]/20 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#00d4a4]" />
-              AI Multi-Channel Content Planner
+          <div className="flex items-center space-x-2.5 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#00d4a4]/10 text-[#00d4a4] border border-[#00d4a4]/20 text-[11px] font-bold">
+              <CalendarDays className="w-3.5 h-3.5" />
+              Content Schedule
             </span>
-            <span className="text-xs text-neutral-400">Client: <strong className="text-white">{client.name}</strong></span>
+            <span className="text-xs text-neutral-400 font-mono-code">Client: <strong className="text-white">{client.name}</strong></span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            {currentMonthYearString} Content Calendar
-          </h1>
-          <p className="text-neutral-400 text-sm max-w-2xl mt-1">
-            Manage, schedule, and visualize your unique monthly social pipeline across Instagram, LinkedIn, Facebook, and X.
-          </p>
+
+          <div className="flex items-baseline space-x-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              {currentMonthYearString}
+            </h1>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#26262a] text-neutral-300">
+              {monthStats.total} {monthStats.total === 1 ? 'post' : 'posts'}
+            </span>
+          </div>
         </div>
 
-        {/* Month Selector Widget */}
-        <div className="bg-[#0a0a0a] border border-[#26262a] rounded-2xl p-3 flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shadow-inner">
-          <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+        {/* Right: Modern AI Action Buttons */}
+        <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          <button
+            onClick={() => handleRegenerateMonth()}
+            disabled={isRegenerating}
+            className="btn-mint flex items-center justify-center space-x-2 px-4 py-2.5 text-xs font-bold shadow-lg shadow-[#00d4a4]/15 disabled:opacity-50 transition-all active:scale-98"
+          >
+            <Sparkles className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+            <span>{isRegenerating ? 'Generating Schedule...' : `Auto-Plan ${MONTH_NAMES[selectedMonth]}`}</span>
+          </button>
+
+          <button
+            onClick={() => setShowGenModal(true)}
+            className="p-2.5 rounded-xl bg-[#0a0a0a] hover:bg-[#26262a] text-neutral-300 hover:text-white border border-[#26262a] transition-colors"
+            title="Custom AI Campaign Settings"
+          >
+            <Sliders className="w-4 h-4 text-[#00d4a4]" />
+          </button>
+        </div>
+      </div>
+
+      {/* QUICK MONTH SWITCHER BAR (12-Month Interactive Strip) */}
+      <div className="bg-[#141416] border border-[#26262a] rounded-2xl p-2.5 flex flex-col lg:flex-row items-center justify-between gap-3 shadow-sm">
+        
+        {/* Left: Year Selector & Prev/Next Arrows */}
+        <div className="flex items-center space-x-1.5 w-full lg:w-auto justify-between sm:justify-start">
+          <div className="flex items-center bg-[#0a0a0a] p-1 rounded-xl border border-[#26262a]">
             <button
               onClick={handlePrevMonth}
-              className="p-2 rounded-xl bg-[#141416] text-neutral-300 hover:text-white hover:bg-[#26262a] border border-[#26262a] transition-all"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-[#1f1f23] transition-colors"
               title="Previous Month"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center space-x-2">
-              <CalendarIcon className="w-4 h-4 text-[#00d4a4]" />
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-                className="bg-[#141416] border border-[#26262a] text-white text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#00d4a4] cursor-pointer"
-              >
-                {MONTH_NAMES.map((name, idx) => (
-                  <option key={idx} value={idx}>{name}</option>
-                ))}
-              </select>
-
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-                className="bg-[#141416] border border-[#26262a] text-white text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#00d4a4] cursor-pointer"
-              >
-                <option value={2025}>2025</option>
-                <option value={2026}>2026</option>
-                <option value={2027}>2027</option>
-                <option value={2028}>2028</option>
-              </select>
-            </div>
+            <button
+              onClick={handleSetCurrentMonth}
+              className="px-2.5 py-1 text-[11px] font-bold text-neutral-300 hover:text-white transition-colors"
+            >
+              Today
+            </button>
 
             <button
               onClick={handleNextMonth}
-              className="p-2 rounded-xl bg-[#141416] text-neutral-300 hover:text-white hover:bg-[#26262a] border border-[#26262a] transition-all"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-[#1f1f23] transition-colors"
               title="Next Month"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="h-6 w-[1px] bg-[#26262a] hidden sm:block" />
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+            className="bg-[#0a0a0a] border border-[#26262a] text-white text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-[#00d4a4] cursor-pointer"
+          >
+            <option value={2025}>2025</option>
+            <option value={2026}>2026</option>
+            <option value={2027}>2027</option>
+            <option value={2028}>2028</option>
+          </select>
+        </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={() => handleRegenerateMonth()}
-              disabled={isRegenerating}
-              className="btn-mint flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-bold shadow-md shadow-[#00d4a4]/20 disabled:opacity-50"
-            >
-              <Sparkles className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
-              <span>{isRegenerating ? 'Generating...' : `Auto-Plan ${MONTH_NAMES[selectedMonth].slice(0, 3)}`}</span>
-            </button>
+        {/* Center/Right: 12-Month Single-Click Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto w-full lg:w-auto py-1 no-scrollbar justify-start lg:justify-end">
+          {MONTH_SHORT_NAMES.map((shortName, idx) => {
+            const isSelected = selectedMonth === idx;
+            const count = postCountsByMonth[idx] || 0;
 
-            <button
-              onClick={() => setShowGenModal(true)}
-              className="btn-pill-dark p-1.5 text-xs text-neutral-300 hover:text-white"
-              title="Custom AI Generation Settings"
-            >
-              <Sliders className="w-4 h-4 text-[#00d4a4]" />
-            </button>
-          </div>
+            return (
+              <button
+                key={idx}
+                onClick={() => setSelectedMonth(idx)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center space-x-1.5 ${
+                  isSelected
+                    ? 'bg-[#00d4a4] text-[#0a0a0a] shadow-md shadow-[#00d4a4]/20'
+                    : 'text-neutral-400 hover:text-white hover:bg-[#0a0a0a]'
+                }`}
+              >
+                <span>{shortName}</span>
+                {count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono-code font-bold ${
+                    isSelected ? 'bg-[#0a0a0a]/20 text-[#0a0a0a]' : 'bg-[#26262a] text-neutral-300'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Month Statistics Bar */}
+      {/* MONTH METRICS & PROGRESS BAR */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-[#141416] border border-[#26262a] rounded-xl p-3.5">
-          <span className="text-[10px] text-neutral-400 font-mono-code uppercase font-bold block">Total in {MONTH_NAMES[selectedMonth].slice(0, 3)}</span>
+          <span className="text-[10px] text-neutral-400 font-mono-code uppercase font-bold block">Total in {MONTH_SHORT_NAMES[selectedMonth]}</span>
           <div className="text-xl font-extrabold text-white mt-1 flex items-baseline gap-1.5">
             <span>{monthStats.total}</span>
             <span className="text-xs text-neutral-500 font-normal">posts</span>
@@ -468,15 +523,23 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         </div>
 
         <div className="bg-[#141416] border border-[#26262a] rounded-xl p-3.5 col-span-2 sm:col-span-1">
-          <span className="text-[10px] text-neutral-400 font-mono-code uppercase font-bold block">Day Coverage</span>
-          <div className="text-xl font-extrabold text-white mt-1 flex items-baseline gap-1.5">
-            <span>{monthStats.daysWithPosts} / {calendarDays.daysInMonth}</span>
-            <span className="text-xs text-[#00d4a4] font-semibold">({monthStats.coveragePercent}%)</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-neutral-400 font-mono-code uppercase font-bold">Coverage</span>
+            <span className="text-[11px] font-bold text-[#00d4a4]">{monthStats.coveragePercent}%</span>
+          </div>
+          <div className="text-base font-extrabold text-white mt-1">
+            {monthStats.daysWithPosts} / {calendarDays.daysInMonth} <span className="text-xs text-neutral-500 font-normal">days</span>
+          </div>
+          <div className="w-full bg-[#0a0a0a] h-1.5 rounded-full mt-1.5 overflow-hidden">
+            <div 
+              className="bg-[#00d4a4] h-full rounded-full transition-all duration-300"
+              style={{ width: `${monthStats.coveragePercent}%` }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Control & Filter Toolbar */}
+      {/* TOOLBAR: Search, View Mode Switcher, and Filters */}
       <div className="bg-[#141416] border border-[#26262a] rounded-xl p-3 flex flex-col lg:flex-row items-center justify-between gap-3">
         
         {/* Left: View Mode Segmented Switcher & Search */}
@@ -519,13 +582,13 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             </button>
           </div>
 
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-60">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-neutral-500" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search month posts..."
+              placeholder="Search posts..."
               className="w-full bg-[#0a0a0a] border border-[#26262a] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#00d4a4]"
             />
           </div>
@@ -611,7 +674,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
       {viewMode === 'calendar' && (
         <div className="bg-[#141416] border border-[#26262a] rounded-2xl overflow-hidden shadow-xl">
           
-          {/* Calendar Header Weekdays */}
+          {/* Weekday Header */}
           <div className="grid grid-cols-7 border-b border-[#26262a] bg-[#0a0a0a] text-center font-mono-code text-[11px] font-bold text-neutral-400 py-3">
             {WEEKDAY_NAMES.map((day, idx) => (
               <div key={idx} className={idx === 0 || idx === 6 ? 'text-neutral-500' : 'text-neutral-300'}>
@@ -622,7 +685,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
           {/* Calendar Day Cells */}
           <div className="grid grid-cols-7 auto-rows-fr gap-[1px] bg-[#26262a]">
-            {/* Empty Offset Cells for previous month days */}
+            {/* Empty Offset Cells */}
             {Array.from({ length: calendarDays.firstDayIndex }).map((_, idx) => (
               <div key={`offset-${idx}`} className="bg-[#0e0e10]/60 min-h-[140px] p-2 opacity-30 select-none" />
             ))}
@@ -729,7 +792,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     className="group-hover:scale-102 transition-transform duration-300"
                   />
                   
-                  {/* Generation Loading Overlay */}
                   {generatingImagePostId === post.id && (
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-20">
                       <Sparkles className="w-6 h-6 text-[#00d4a4] animate-spin" />
@@ -737,7 +799,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     </div>
                   )}
                   
-                  {/* Status Badge */}
                   <div className="absolute top-2.5 right-2.5 z-10">
                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
                       post.status === 'published'
@@ -779,7 +840,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     {post.caption}
                   </p>
 
-                  {/* Target URL */}
                   <div className="bg-[#0a0a0a] border border-[#26262a] rounded-lg p-2 flex items-center justify-between text-[11px]">
                     <span className="text-neutral-500 truncate">CTA Link:</span>
                     <a
@@ -793,7 +853,6 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     </a>
                   </div>
 
-                  {/* Hashtags */}
                   <div className="flex flex-wrap gap-1 pt-0.5">
                     {post.hashtags.slice(0, 3).map((ht, hIdx) => (
                       <span key={hIdx} className="text-[10px] text-neutral-400 bg-[#0a0a0a] px-1.5 py-0.5 rounded border border-[#26262a] font-mono-code">
@@ -1226,7 +1285,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-[#00d4a4]" />
-                <h3 className="text-base font-bold text-white">Custom AI Post Synthesizer for {currentMonthYearString}</h3>
+                <h3 className="text-base font-bold text-white">Custom AI Campaign Settings</h3>
               </div>
               <button
                 onClick={() => setShowGenModal(false)}
