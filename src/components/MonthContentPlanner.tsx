@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { Client, SocialPost, SocialPlatform, GenerationSettings, PostCategory } from '../types';
 import { 
   Sparkles, 
@@ -21,7 +21,10 @@ import {
   ChevronRight,
   Plus,
   Eye,
-  CalendarDays
+  CalendarDays,
+  Upload,
+  Video,
+  Link as LinkIcon
 } from 'lucide-react';
 import { getSocialIcon } from './SocialIcons';
 import { PostGraphicCard } from './PostGraphicCard';
@@ -82,7 +85,14 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
   const [reschedulingPost, setReschedulingPost] = useState<SocialPost | null>(null);
   const [showGenModal, setShowGenModal] = useState(false);
   const [newPostDate, setNewPostDate] = useState<string | null>(null);
+  const [newPostMedia, setNewPostMedia] = useState<{ url: string; isVideo: boolean } | null>(null);
   const [previewPost, setPreviewPost] = useState<SocialPost | null>(null);
+  const [previewMediaInputUrl, setPreviewMediaInputUrl] = useState('');
+  const [showPreviewMediaUrlInput, setShowPreviewMediaUrlInput] = useState(false);
+
+  const previewFileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
+  const newPostFileInputRef = useRef<HTMLInputElement>(null);
 
   const [genSettings, setGenSettings] = useState<GenerationSettings>({
     targetMonth: `${MONTH_NAMES[selectedMonth]} ${selectedYear}`,
@@ -236,7 +246,14 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     setGeneratingImagePostId(post.id);
     try {
       const result = await generateVisualImageWithGemini(client, post);
-      const updatedPosts = posts.map(p => p.id === post.id ? { ...p, imageUrl: result.imageUrl, imagePrompt: result.promptUsed } : p);
+      const updatedPosts = posts.map(p => p.id === post.id ? { 
+        ...p, 
+        imageUrl: result.imageUrl, 
+        videoUrl: undefined,
+        mediaType: 'image' as const,
+        imageSource: 'ai_generated' as const,
+        imagePrompt: result.promptUsed 
+      } : p);
       onUpdateClient({
         ...client,
         posts: updatedPosts
@@ -246,6 +263,76 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
     } finally {
       setGeneratingImagePostId(null);
     }
+  };
+
+  // Upload Custom Media (Image / Video) for Preview Modal
+  const handlePreviewFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !previewPost) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      const updatedPost: SocialPost = {
+        ...previewPost,
+        imageUrl: isVideo ? dataUrl : dataUrl,
+        videoUrl: isVideo ? dataUrl : undefined,
+        mediaType: isVideo ? 'video' : 'image',
+        imageSource: 'custom'
+      };
+
+      setPreviewPost(updatedPost);
+      const updatedPosts = posts.map(p => p.id === previewPost.id ? updatedPost : p);
+      onUpdateClient({
+        ...client,
+        posts: updatedPosts
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleApplyPreviewMediaUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!previewMediaInputUrl.trim() || !previewPost) return;
+
+    const url = previewMediaInputUrl.trim();
+    const isVideo = Boolean(url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i));
+
+    const updatedPost: SocialPost = {
+      ...previewPost,
+      imageUrl: url,
+      videoUrl: isVideo ? url : undefined,
+      mediaType: isVideo ? 'video' : 'image',
+      imageSource: 'custom'
+    };
+
+    setPreviewPost(updatedPost);
+    const updatedPosts = posts.map(p => p.id === previewPost.id ? updatedPost : p);
+    onUpdateClient({
+      ...client,
+      posts: updatedPosts
+    });
+    setPreviewMediaInputUrl('');
+    setShowPreviewMediaUrlInput(false);
+  };
+
+  const handleResetPreviewMedia = () => {
+    if (!previewPost) return;
+    const updatedPost: SocialPost = {
+      ...previewPost,
+      imageUrl: undefined,
+      videoUrl: undefined,
+      mediaType: 'image',
+      imageSource: 'preset'
+    };
+
+    setPreviewPost(updatedPost);
+    const updatedPosts = posts.map(p => p.id === previewPost.id ? updatedPost : p);
+    onUpdateClient({
+      ...client,
+      posts: updatedPosts
+    });
   };
 
   const handleApproveAllDrafts = () => {
@@ -347,7 +434,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
       targetUrl: client.websiteUrl,
       hashtags: [`#${client.name.replace(/\s+/g, '')}`, `#${MONTH_NAMES[selectedMonth]}${selectedYear}`, `#Innovation`],
       imagePrompt: `Clean modern social card for ${client.name}, brand color ${client.brandColors[0] || '#00d4a4'}, 8k resolution`,
-      imageSource: 'preset',
+      imageUrl: newPostMedia ? newPostMedia.url : undefined,
+      videoUrl: newPostMedia?.isVideo ? newPostMedia.url : undefined,
+      mediaType: newPostMedia?.isVideo ? 'video' : 'image',
+      imageSource: newPostMedia ? 'custom' : 'preset',
       status: 'scheduled'
     };
 
@@ -356,6 +446,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
       posts: [...posts, newPost]
     });
     setNewPostDate(null);
+    setNewPostMedia(null);
   };
 
   const handleDeletePost = (postId: string) => {
@@ -717,7 +808,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                     </span>
 
                     <button
-                      onClick={() => setNewPostDate(formattedDate)}
+                      onClick={() => {
+                        setNewPostDate(formattedDate);
+                        setNewPostMedia(null);
+                      }}
                       className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-[#0a0a0a] text-neutral-400 hover:text-[#00d4a4] hover:bg-[#26262a] border border-[#26262a] transition-all"
                       title={`Add post on ${formattedDate}`}
                     >
@@ -759,7 +853,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
 
                     {dayPosts.length === 0 && (
                       <div 
-                        onClick={() => setNewPostDate(formattedDate)}
+                        onClick={() => {
+                          setNewPostDate(formattedDate);
+                          setNewPostMedia(null);
+                        }}
                         className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer text-[10px] text-neutral-500 hover:text-[#00d4a4] border border-dashed border-[#26262a] hover:border-[#00d4a4]/40 rounded-lg p-2 transition-all"
                       >
                         + Schedule Post
@@ -785,7 +882,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                 {/* Visual Asset Container */}
                 <div className="relative aspect-video bg-[#0a0a0a] overflow-hidden border-b border-[#26262a]">
                   <PostGraphicCard
-                    key={post.imageUrl || post.id}
+                    key={post.imageUrl || post.videoUrl || post.id}
                     post={post}
                     primaryColor={client.brandColors[0] || '#00d4a4'}
                     secondaryColor={client.brandColors[1] || '#3772cf'}
@@ -1054,26 +1151,99 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         </div>
       )}
 
-      {/* MODAL 1: POST PREVIEW MODAL */}
+      {/* MODAL 1: POST PREVIEW MODAL WITH CUSTOM MEDIA (IMAGE / VIDEO) UPLOADER */}
       {previewPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl space-y-4">
+          <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl space-y-3">
+            
+            {/* Visual Media Header with Controls */}
             <div className="relative aspect-video bg-[#0a0a0a] border-b border-[#26262a]">
               <PostGraphicCard
                 post={previewPost}
                 primaryColor={client.brandColors[0] || '#00d4a4'}
                 secondaryColor={client.brandColors[1] || '#3772cf'}
+                showControls={Boolean(previewPost.videoUrl || previewPost.mediaType === 'video')}
               />
+
               <button
-                onClick={() => setPreviewPost(null)}
-                className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white p-1.5 rounded-full border border-white/20 z-20"
+                onClick={() => {
+                  setPreviewPost(null);
+                  setShowPreviewMediaUrlInput(false);
+                }}
+                className="absolute top-3 right-3 bg-black/80 hover:bg-black text-white p-1.5 rounded-full border border-white/20 z-20"
               >
                 ×
               </button>
             </div>
 
-            <div className="p-6 pt-0 space-y-4 text-xs">
-              <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
+            {/* Custom Media Quick Actions Bar */}
+            <div className="px-6 py-2 bg-[#0d0d0f] border-b border-[#26262a] flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center space-x-2">
+                <input
+                  ref={previewFileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handlePreviewFileUpload}
+                  className="hidden"
+                />
+
+                <button
+                  onClick={() => previewFileInputRef.current?.click()}
+                  className="btn-pill-dark px-3 py-1.5 text-xs font-semibold flex items-center space-x-1.5"
+                  title="Upload custom image or video file"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#00d4a4]" />
+                  <span>Upload Image / Video</span>
+                </button>
+
+                <button
+                  onClick={() => setShowPreviewMediaUrlInput(!showPreviewMediaUrlInput)}
+                  className="btn-pill-dark px-3 py-1.5 text-xs font-semibold flex items-center space-x-1.5"
+                  title="Paste external Image or Video URL"
+                >
+                  <LinkIcon className="w-3.5 h-3.5 text-neutral-400" />
+                  <span>Media URL</span>
+                </button>
+
+                {previewPost.imageSource === 'custom' && (
+                  <button
+                    onClick={handleResetPreviewMedia}
+                    className="text-[11px] text-rose-400 hover:underline flex items-center gap-1 pl-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Reset Media</span>
+                  </button>
+                )}
+              </div>
+
+              {previewPost.mediaType === 'video' && (
+                <span className="px-2 py-0.5 rounded-full bg-[#00d4a4]/10 text-[#00d4a4] font-mono-code font-bold text-[10px] flex items-center gap-1">
+                  <Video className="w-3 h-3" />
+                  Custom Video Active
+                </span>
+              )}
+            </div>
+
+            {/* Inline URL Input Dropdown */}
+            {showPreviewMediaUrlInput && (
+              <form onSubmit={handleApplyPreviewMediaUrl} className="px-6 py-2 bg-[#0a0a0a] border-b border-[#26262a] flex items-center gap-2">
+                <input
+                  type="url"
+                  required
+                  value={previewMediaInputUrl}
+                  onChange={(e) => setPreviewMediaInputUrl(e.target.value)}
+                  placeholder="https://example.com/asset.jpg or .mp4 video"
+                  className="flex-1 bg-[#141416] border border-[#26262a] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00d4a4] font-mono-code"
+                />
+                <button type="submit" className="btn-mint px-3 py-1.5 text-xs font-bold">
+                  Apply
+                </button>
+              </form>
+            )}
+
+            {/* Modal Body & Copywriting */}
+            <div className="p-6 pt-1 space-y-3.5 text-xs">
+              <div className="flex items-center justify-between border-b border-[#26262a] pb-2.5">
                 <div className="flex items-center space-x-2">
                   <span className="px-2.5 py-0.5 rounded-full bg-[#00d4a4]/10 text-[#00d4a4] font-mono-code font-bold text-xs border border-[#00d4a4]/30">
                     DAY {previewPost.dayNumber}
@@ -1237,7 +1407,7 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         </div>
       )}
 
-      {/* MODAL 3: ADD NEW POST ON DATE MODAL */}
+      {/* MODAL 3: ADD NEW POST ON DATE MODAL WITH CUSTOM MEDIA ATTACHMENT */}
       {newPostDate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -1247,7 +1417,10 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                 <h3 className="text-base font-bold text-white">Add Post on {newPostDate}</h3>
               </div>
               <button
-                onClick={() => setNewPostDate(null)}
+                onClick={() => {
+                  setNewPostDate(null);
+                  setNewPostMedia(null);
+                }}
                 className="text-neutral-400 hover:text-white font-bold text-lg px-2"
               >
                 ×
@@ -1257,10 +1430,58 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
             <form onSubmit={handleCreatePostOnDate} className="space-y-4 text-xs">
               <p className="text-neutral-400">Schedule a new content card directly on <strong className="text-white">{newPostDate}</strong> for {client.name}.</p>
 
+              {/* Optional Media Attachment */}
+              <div className="space-y-2 bg-[#0a0a0a] border border-[#26262a] rounded-xl p-3">
+                <label className="block font-semibold text-neutral-300 uppercase tracking-wider text-[10px]">
+                  Attach Custom Image or Video (Optional)
+                </label>
+                
+                <input
+                  ref={newPostFileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const isVideo = file.type.startsWith('video/');
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      setNewPostMedia({
+                        url: event.target?.result as string,
+                        isVideo
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="hidden"
+                />
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => newPostFileInputRef.current?.click()}
+                    className="btn-pill-dark px-3 py-1.5 text-xs font-semibold flex items-center space-x-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#00d4a4]" />
+                    <span>Upload File</span>
+                  </button>
+
+                  {newPostMedia && (
+                    <span className="text-[11px] text-[#00d4a4] font-semibold truncate flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {newPostMedia.isVideo ? 'Video attached' : 'Image attached'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="pt-3 flex justify-end space-x-2 border-t border-[#26262a]">
                 <button
                   type="button"
-                  onClick={() => setNewPostDate(null)}
+                  onClick={() => {
+                    setNewPostDate(null);
+                    setNewPostMedia(null);
+                  }}
                   className="btn-pill-dark px-4 py-2 font-semibold"
                 >
                   Cancel
@@ -1346,14 +1567,14 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
         </div>
       )}
 
-      {/* MODAL 5: FULL POST EDIT MODAL */}
+      {/* MODAL 5: FULL POST EDIT MODAL WITH CUSTOM MEDIA (IMAGE / VIDEO) SELECTOR */}
       {editingPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-[#141416] border border-[#26262a] rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#26262a] pb-3">
               <div>
                 <h3 className="text-base font-bold text-white">Edit Day {editingPost.dayNumber} Post</h3>
-                <p className="text-xs text-neutral-400">Update post title, copy, scheduled date, and CTA link</p>
+                <p className="text-xs text-neutral-400">Update post title, copy, custom image/video, scheduled date, and CTA link</p>
               </div>
               <button
                 onClick={() => setEditingPost(null)}
@@ -1375,6 +1596,95 @@ export const MonthContentPlanner: React.FC<MonthContentPlannerProps> = ({
                   onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
                   className="w-full bg-[#0a0a0a] border border-[#26262a] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#00d4a4]"
                 />
+              </div>
+
+              {/* Custom Media (Image / Video) Upload Block */}
+              <div className="bg-[#0a0a0a] border border-[#26262a] rounded-xl p-3.5 space-y-2.5">
+                <label className="block font-semibold text-neutral-300 uppercase tracking-wider text-[10px]">
+                  Post Media Asset (Custom Image or Video)
+                </label>
+
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const isVideo = file.type.startsWith('video/');
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const dataUrl = event.target?.result as string;
+                      setEditingPost({
+                        ...editingPost,
+                        imageUrl: dataUrl,
+                        videoUrl: isVideo ? dataUrl : undefined,
+                        mediaType: isVideo ? 'video' : 'image',
+                        imageSource: 'custom'
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="hidden"
+                />
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="btn-pill-dark px-3 py-2 text-xs font-semibold flex items-center space-x-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#00d4a4]" />
+                    <span>Upload Image/Video File</span>
+                  </button>
+
+                  <div className="relative flex-1">
+                    <LinkIcon className="w-3 h-3 absolute left-2.5 top-2.5 text-neutral-500" />
+                    <input
+                      type="url"
+                      value={editingPost.videoUrl || editingPost.imageUrl || ''}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        const isVideo = Boolean(url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i));
+                        setEditingPost({
+                          ...editingPost,
+                          imageUrl: url,
+                          videoUrl: isVideo ? url : undefined,
+                          mediaType: isVideo ? 'video' : 'image',
+                          imageSource: 'custom'
+                        });
+                      }}
+                      placeholder="Paste Image or MP4 Video URL"
+                      className="w-full bg-[#141416] border border-[#26262a] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#00d4a4] font-mono-code"
+                    />
+                  </div>
+                </div>
+
+                {/* Media Preview Thumbnail in Edit Modal */}
+                {(editingPost.videoUrl || editingPost.imageUrl) && (
+                  <div className="relative aspect-video max-h-36 rounded-lg overflow-hidden border border-[#26262a] bg-[#141416]">
+                    <PostGraphicCard
+                      post={editingPost}
+                      primaryColor={client.brandColors[0] || '#00d4a4'}
+                      secondaryColor={client.brandColors[1] || '#3772cf'}
+                      showControls={Boolean(editingPost.videoUrl)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setEditingPost({
+                        ...editingPost,
+                        imageUrl: undefined,
+                        videoUrl: undefined,
+                        mediaType: 'image',
+                        imageSource: 'preset'
+                      })}
+                      className="absolute top-2 right-2 p-1 rounded-md bg-black/80 hover:bg-rose-500 text-white transition-colors"
+                      title="Reset to Preset Media"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

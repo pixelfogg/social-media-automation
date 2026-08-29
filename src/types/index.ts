@@ -65,7 +65,9 @@ export interface SocialPost {
   hashtags: string[];
   imagePrompt: string;
   imageUrl?: string;
-  imageSource: 'ai_generated' | 'uploaded' | 'preset';
+  videoUrl?: string;
+  mediaType?: 'image' | 'video';
+  imageSource: 'ai_generated' | 'uploaded' | 'preset' | 'custom';
   status: 'draft' | 'scheduled' | 'published';
   publishedAt?: string;
   engagementMetrics?: {
