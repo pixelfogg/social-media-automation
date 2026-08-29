@@ -487,6 +487,7 @@ Brand Secondary Accent: ${secondaryColor}
 Dark Canvas: ${darkCanvas}
 Post Title: "${post.title}"
 Post Context: "${post.caption}"
+Mandatory Brand Logo Requirement: The image must prominently incorporate the authentic, unaltered official brand logo of ${client.name} without any alteration to its shape, letterforms, or brand colors (${primaryColor}), anchored at a corner or header for 100% brand presence.
 Design Rules: Modern dark canvas, glassmorphism, glowing ${primaryColor} volumetric lighting, ultra-sharp 8k, Octane 3D render.
 
 Return ONLY the final Midjourney/Flux/Gemini image prompt text, no quotes or explanations.`;
