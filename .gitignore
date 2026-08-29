@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.env
+.env*.local
+scratch/
+test_*.mjs
+({name
