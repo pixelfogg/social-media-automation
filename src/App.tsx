@@ -23,22 +23,13 @@ export function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [activeClientId, setActiveId] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => betterAuth.getSession()?.user || null);
+  const [clients, setClients] = useState<Client[]>(() => getClients());
+  const [activeClientId, setActiveId] = useState<string>(() => getActiveClientId());
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showUserProfileModal, setShowUserProfileModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Initialize Better Auth Session & Database
-  useEffect(() => {
-    const sessionData = betterAuth.getSession();
-    if (sessionData) {
-      setCurrentUser(sessionData.user);
-    }
-    refreshWorkspaceData();
-  }, []);
 
   const refreshWorkspaceData = () => {
     const loadedClients = getClients();
@@ -49,16 +40,24 @@ export function App() {
 
   // URL Path Synchronization
   // Routes:
-  // /clients -> Clients Directory
+  // /clients -> Clients Directory (Default Landing Page)
   // /dashboard/:clientId/:tab? -> Client Workspace Dashboard
   useEffect(() => {
-    if (!currentUser || clients.length === 0) return;
+    // If not authenticated, ensure the URL is clean at /
+    if (!currentUser) {
+      if (location.pathname !== '/') {
+        navigate('/', { replace: true });
+      }
+      return;
+    }
+
+    if (clients.length === 0) return;
 
     const path = location.pathname;
 
     if (path === '/' || path === '') {
-      // Default to active client workspace overview
-      navigate(`/dashboard/${activeClientId || clients[0].id}/overview`, { replace: true });
+      // Default to clients directory
+      navigate('/clients', { replace: true });
     } else if (path.startsWith('/dashboard/')) {
       const parts = path.split('/').filter(Boolean);
       const urlClientId = parts[1];
@@ -77,7 +76,7 @@ export function App() {
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
     showToast(`Welcome back, ${user.name}!`);
-    navigate(`/dashboard/${activeClientId || (clients[0] && clients[0].id) || 'client_nexus_01'}/overview`);
+    navigate('/clients', { replace: true });
   };
 
   const handleSignOut = () => {
@@ -85,7 +84,7 @@ export function App() {
     setCurrentUser(null);
     setShowUserProfileModal(false);
     showToast('Signed out of SocialPulse AI.');
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const handleSelectClient = (id: string) => {
