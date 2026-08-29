@@ -60,13 +60,24 @@ export const ImagePromptStudio: React.FC<ImagePromptStudioProps> = ({
   }
 
   // Full-fidelity prompt generator incorporating complete DESIGN.md specifications & Mandatory Unaltered Logo
+  const logoUrl = client.logoDarkUrl || client.logoLightUrl || client.logoUrl;
+  const logoUrlParam = logoUrl && !logoUrl.startsWith('data:') ? ` --sref ${logoUrl} --sw 100` : '';
+
   const synthesizedPrompt = `High-end commercial brand asset for "${activePost.title}". Designed strictly in accordance with ${client.name}'s DESIGN.md Brand Guidelines (${cleanDomain}).
-Visual Subject & Concept: ${promptStyle} representing ${activePost.category} for ${client.name} in the ${client.industry} domain.
-Mandatory Brand Identity & Exact Logo Embedding: Feature the authentic, un-altered official brand logo of "${client.name}" prominently anchored at the ${logoPlacement}. The ${client.name} brand logo must remain 100% exact in vector geometry, letterforms, proportions, and official brand colors (${primaryColor}) without alteration, deformation, hallucination, or artifacting, rendered as a crisp high-resolution brand mark with subtle glassmorphic backdrop for perfect visual presence.
-Color Palette & Materials: Primary obsidian tone (${primaryColor}), dark slate accents (${secondaryColor}), warm off-white canvas backdrop (${canvasColor}), premium frosted glassmorphism with subtle hairline border reflections (#26262a).
-Atmosphere & Lighting: ${lighting}, volumetric soft shadows, refined global illumination, cinematic depth of field.
-Composition & Typography Rules: Bold geometric headline space (Clash Display / Satoshi typography matrix), minimal technical overlines (JetBrains Mono style), negative space for UI overlays, razor-sharp clean edges.
-Style & Render Specs: Octane Render 3D, commercial studio product photography, 8k resolution, photorealistic textures, hyper-detailed craftsmanship, ray tracing reflections, award-winning Behance/Dribbble showcase --ar ${aspectRatio.replace('--ar ', '')} --v 6.0 --style raw --q 2`;
+
+🎯 MANDATORY BRAND LOGO SPECIFICATION:
+• Official Logo Asset: "${client.name}" Vector Brand Mark (${logoUrl ? 'Direct Asset Provided' : 'Strict Vector Preservation'})
+• Screen Placement: Anchored firmly at ${logoPlacement}
+• Logo Integrity Directive: The authentic official brand logo of "${client.name}" MUST be rendered 100% exact in vector geometry, letterforms, proportions, and brand colors (${primaryColor}) without ANY alteration, hallucination, distortion, or artifacting, mounted on a subtle glassmorphic backdrop for perfect brand presence.
+
+🎨 VISUAL CONCEPT & BRAND TOKENS:
+• Style: ${promptStyle} representing ${activePost.category} for ${client.name} (${client.industry})
+• Palette: Obsidian primary (${primaryColor}), slate accent (${secondaryColor}), surface backdrop (${canvasColor}), hairline borders (#26262a)
+• Lighting: ${lighting}, volumetric soft shadows, refined global illumination, cinematic depth of field
+• Framing: Bold geometric typography matrix, balanced negative space for text/UI overlays
+
+⚙️ RENDER ENGINE PARAMETERS:
+Octane Render 3D, commercial studio product photography, 8k resolution, photorealistic textures, hyper-detailed craftsmanship, ray tracing reflections, award-winning Behance/Dribbble showcase --ar ${aspectRatio.replace('--ar ', '')} --v 6.0 --style raw --q 2${logoUrlParam}`;
 
   const handleCopyPrompt = () => {
     navigator.clipboard.writeText(synthesizedPrompt);
@@ -487,7 +498,33 @@ Style & Render Specs: Octane Render 3D, commercial studio product photography, 8
                   </div>
                 </div>
 
-                <p className="text-xs text-neutral-200 font-mono-code bg-[#0a0a0a] border border-[#26262a] rounded-xl p-4 leading-relaxed whitespace-pre-line">
+                {/* Highlighted Mandatory Logo Directive Banner */}
+                <div className="bg-[#00d4a4]/10 border border-[#00d4a4]/30 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-black/60 border border-white/20 p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                      {activeLogo ? (
+                        <img src={activeLogo} alt={client.name} className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <ShieldCheck className="w-4 h-4 text-[#00d4a4]" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-white font-bold text-xs flex items-center gap-1.5">
+                        <span>Mandatory Brand Logo:</span>
+                        <span className="text-[#00d4a4] font-mono-code font-bold">{client.name} (100% Unaltered)</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-300">
+                        Anchored at <strong className="text-white">{logoPlacement}</strong> with strict vector geometry and color preservation.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="px-2.5 py-1 rounded-full bg-[#00d4a4] text-[#0a0a0a] font-bold text-[10px] font-mono-code uppercase tracking-wider shrink-0 shadow-xs">
+                    ✓ Logo Locked
+                  </span>
+                </div>
+
+                <p className="text-xs text-neutral-200 font-mono-code bg-[#0a0a0a] border border-[#26262a] rounded-xl p-4 leading-relaxed whitespace-pre-line select-text">
                   {synthesizedPrompt}
                 </p>
 
