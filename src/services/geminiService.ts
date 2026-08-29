@@ -379,10 +379,15 @@ Return ONLY a valid JSON array of 15 objects with NO markdown formatting:
 
   try {
     const raw = await callGeminiApi(prompt, 3500);
-    const cleaned = raw.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
-    aiGeneratedItems = JSON.parse(cleaned);
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      aiGeneratedItems = JSON.parse(jsonMatch[0]);
+    } else {
+      const cleaned = raw.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+      aiGeneratedItems = JSON.parse(cleaned);
+    }
   } catch (e) {
-    console.warn('Gemini 30-day API call failed, generating rich contextual calendar:', e);
+    console.warn('Gemini 30-day API call fallback, using rich contextual generator:', e);
   }
 
   // Build a complete 30-day bespoke calendar with diverse titles, captions, and prompts
